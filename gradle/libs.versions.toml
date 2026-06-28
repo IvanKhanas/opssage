@@ -1,0 +1,84 @@
+[versions]
+# Kotlin
+kotlin = "2.2.21"
+coroutines = "1.9.0"
+kotlin-logging = "7.0.3"
+
+# Spring
+spring-boot = "4.0.3"
+spring-ai = "1.0.0"
+
+
+# Testing
+mockk = "1.14.2"
+springmockk = "4.0.2"
+wiremock = "3.13.0"
+datafaker = "2.4.2"
+testcontainers = "1.20.6"
+
+# Code quality
+ktlint = "13.1.0"
+ktlint-core = "1.5.0"
+spotless = "8.4.0"
+sonarqube = "7.2.3.7755"
+
+[libraries]
+# ── Spring Boot ──────────────────────────────────────────────────────────────
+spring-boot-bom = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+spring-boot-starter-webflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
+spring-boot-starter-data-mongodb = { group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb" }
+spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
+spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
+spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
+
+# ── Spring AI ────────────────────────────────────────────────────────────────
+spring-ai-openai-starter = { group = "org.springframework.ai", name = "spring-ai-openai-spring-boot-starter", version.ref = "spring-ai" }
+spring-ai-mcp-server = { group = "org.springframework.ai", name = "spring-ai-mcp-server-spring-boot-starter", version.ref = "spring-ai" }
+spring-ai-mcp-client = { group = "org.springframework.ai", name = "spring-ai-mcp-client-spring-boot-starter", version.ref = "spring-ai" }
+
+# ── Kotlin ───────────────────────────────────────────────────────────────────
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect" }
+kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5" }
+kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "kotlin-logging" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-reactor = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# ── Observability ────────────────────────────────────────────────────────────
+micrometer-registry-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus" }
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+springmockk = { group = "com.ninja-squad", name = "springmockk", version.ref = "springmockk" }
+wiremock = { group = "org.wiremock", name = "wiremock-standalone", version.ref = "wiremock" }
+datafaker = { group = "net.datafaker", name = "datafaker", version.ref = "datafaker" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+
+# ── Testcontainers ───────────────────────────────────────────────────────────
+testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
+testcontainers = { group = "org.testcontainers", name = "testcontainers" }
+testcontainers-junit5 = { group = "org.testcontainers", name = "junit-jupiter" }
+testcontainers-mongodb = { group = "org.testcontainers", name = "mongodb" }
+
+# ── Code quality ─────────────────────────────────────────────────────────────
+ktlint-rule-engine-core = { group = "com.pinterest.ktlint", name = "ktlint-rule-engine-core", version.ref = "ktlint-core" }
+ktlint-cli-ruleset-core = { group = "com.pinterest.ktlint", name = "ktlint-cli-ruleset-core", version.ref = "ktlint-core" }
+
+[bundles]
+spring-boot-base = ["spring-boot-starter-web", "kotlin-reflect", "kotlin-logging"]
+spring-boot-test = ["spring-boot-starter-test", "kotlin-test-junit5", "mockk", "springmockk"]
+observability = ["spring-boot-starter-actuator", "micrometer-registry-prometheus"]
+
+[plugins]
+# Spring
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+
+# Kotlin
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+
+# Code quality
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }

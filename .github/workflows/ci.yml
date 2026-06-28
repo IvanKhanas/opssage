@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build (without tests)
+        run: ./gradlew build -x check
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run tests and generate JaCoCo reports
+        run: ./gradlew test jacocoTestReport
+
+      - name: Upload JaCoCo XML reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-xml-reports
+          if-no-files-found: warn
+          path: |
+            agent-service/build/reports/jacoco/test
+            sre-mcp-server/build/reports/jacoco/test
+            knowledge-mcp-server/build/reports/jacoco/test
+            admin-service/build/reports/jacoco/test
+
+  lint:
+    name: Lint & Sonar
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Download JaCoCo XML reports
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-xml-reports
+          path: .
+
+      - name: Run Ktlint
+        run: ./gradlew ktlintCheck
+
+      - name: Check license headers
+        run: ./gradlew spotlessCheck
+
+      - name: Run SonarQube analysis
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' && env.SONAR_PROJECT_KEY != '' && env.SONAR_ORGANIZATION != '' }}
+        run: |
+          ./gradlew sonar \
+            -Dsonar.host.url="$SONAR_HOST_URL" \
+            -Dsonar.token="$SONAR_TOKEN" \
+            -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
+            -Dsonar.organization="$SONAR_ORGANIZATION" \
+            -Dsonar.projectName="opssage"
