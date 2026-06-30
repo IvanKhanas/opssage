@@ -6,7 +6,7 @@ kotlin-logging = "7.0.3"
 
 # Spring
 spring-boot = "4.0.3"
-spring-ai = "1.0.0"
+spring-ai = "2.0.0"
 
 
 # Testing
