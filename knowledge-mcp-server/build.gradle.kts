@@ -12,15 +12,27 @@ tasks.test {
     jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
 
+tasks.withType<org.gradle.testing.jacoco.tasks.JacocoReport>().configureEach {
+    classDirectories.setFrom(
+        files(
+            classDirectories.files.map {
+                fileTree(it).exclude("**/KnowledgeMcpServerAppKt.class")
+            },
+        ),
+    )
+}
+
 dependencies {
     implementation(platform(libs.spring.boot.bom))
     testImplementation(platform(libs.spring.boot.bom))
     testImplementation(platform(libs.testcontainers.bom))
 
-    implementation(libs.bundles.spring.boot.base)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.kotlin.logging)
     implementation(libs.bundles.observability)
     implementation(libs.spring.boot.starter.webflux)
-    implementation(libs.spring.boot.starter.data.mongodb)
+    implementation(libs.spring.boot.starter.data.mongodb.reactive)
+    implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.ai.mcp.server)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.reactor)

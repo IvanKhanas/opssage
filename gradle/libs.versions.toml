@@ -28,14 +28,15 @@ spring-boot-bom = { group = "org.springframework.boot", name = "spring-boot-depe
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
 spring-boot-starter-webflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
 spring-boot-starter-data-mongodb = { group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb" }
+spring-boot-starter-data-mongodb-reactive = { group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb-reactive" }
 spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 
 # ── Spring AI ────────────────────────────────────────────────────────────────
-spring-ai-openai-starter = { group = "org.springframework.ai", name = "spring-ai-openai-spring-boot-starter", version.ref = "spring-ai" }
-spring-ai-mcp-server = { group = "org.springframework.ai", name = "spring-ai-mcp-server-spring-boot-starter", version.ref = "spring-ai" }
-spring-ai-mcp-client = { group = "org.springframework.ai", name = "spring-ai-mcp-client-spring-boot-starter", version.ref = "spring-ai" }
+spring-ai-openai-starter = { group = "org.springframework.ai", name = "spring-ai-starter-model-openai", version.ref = "spring-ai" }
+spring-ai-mcp-server = { group = "org.springframework.ai", name = "spring-ai-starter-mcp-server-webflux", version.ref = "spring-ai" }
+spring-ai-mcp-client = { group = "org.springframework.ai", name = "spring-ai-starter-mcp-client", version.ref = "spring-ai" }
 
 # ── Kotlin ───────────────────────────────────────────────────────────────────
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect" }
