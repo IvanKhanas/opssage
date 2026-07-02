@@ -36,14 +36,14 @@ class ServiceProfileService(
     fun findById(id: String): Profile =
         repo
             .findById(id)
-            .orNotFound("Service profile", id)
+            .orNotFound(RESOURCE, id)
 
     fun findByServiceId(id: String): Profile = repo.findByServiceId(id)
 
     fun findByServiceIdOrThrow(serviceId: String): Profile =
         repo
             .findByServiceId(serviceId)
-            .orNotFound("Service profile", serviceId)
+            .orNotFound(RESOURCE, serviceId)
 
     fun findAll(): Flux<ServiceProfile> = repo.findAll()
 
@@ -57,7 +57,7 @@ class ServiceProfileService(
         val existing =
             repo
                 .findById(id)
-                .orNotFound("Service profile", id)
+                .orNotFound(RESOURCE, id)
 
         return existing.flatMap { stored ->
             repo.save(
@@ -74,8 +74,12 @@ class ServiceProfileService(
         val existing =
             repo
                 .findById(id)
-                .orNotFound("Service profile", id)
+                .orNotFound(RESOURCE, id)
 
         return existing.flatMap { repo.deleteById(id) }
+    }
+
+    private companion object {
+        const val RESOURCE = "Service profile"
     }
 }
