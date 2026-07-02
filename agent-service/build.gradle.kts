@@ -14,9 +14,6 @@ tasks.test {
 
 dependencies {
     implementation(platform(libs.spring.boot.bom))
-    testImplementation(platform(libs.spring.boot.bom))
-    testImplementation(platform(libs.testcontainers.bom))
-
     implementation(libs.bundles.spring.boot.base)
     implementation(libs.bundles.observability)
     implementation(libs.spring.boot.starter.validation)
@@ -25,6 +22,8 @@ dependencies {
     implementation(libs.spring.ai.mcp.client)
     implementation(libs.kotlinx.coroutines.core)
 
+    testImplementation(platform(libs.spring.boot.bom))
+    testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.bundles.spring.boot.test)
     testImplementation(libs.wiremock)
     testImplementation(libs.datafaker)

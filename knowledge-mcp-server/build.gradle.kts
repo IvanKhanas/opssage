@@ -24,9 +24,6 @@ tasks.withType<org.gradle.testing.jacoco.tasks.JacocoReport>().configureEach {
 
 dependencies {
     implementation(platform(libs.spring.boot.bom))
-    testImplementation(platform(libs.spring.boot.bom))
-    testImplementation(platform(libs.testcontainers.bom))
-
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlin.logging)
     implementation(libs.bundles.observability)
@@ -37,6 +34,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.reactor)
 
+    testImplementation(platform(libs.spring.boot.bom))
+    testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.bundles.spring.boot.test)
     testImplementation(libs.wiremock)
     testImplementation(libs.datafaker)
