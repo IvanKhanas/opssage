@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: knowledge-mcp-server
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/opssage-knowledge}
+  ai:
+    mcp:
+      server:
+        name: knowledge-mcp-server
+        version: 1.0.0
+
+server:
+  port: ${SERVER_PORT:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true

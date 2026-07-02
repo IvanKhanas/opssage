@@ -10,6 +10,7 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 [{*.kt,*.kts}]
+max_line_length = 80
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 
 ij_kotlin_imports_layout = *,|,java.**,|,javax.**,|,kotlin.**,|,kotlinx.**,|,org.springframework.**
