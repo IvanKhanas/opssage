@@ -30,7 +30,10 @@ class ServiceProfileMcpTools(
     @Tool(
         description =
             "Get the profile of a service: team ownership, criticality, " +
-                "upstream and downstream dependencies, and on-call contacts.",
+                "upstream and downstream services, Kafka topics, important " +
+                "endpoints, common failure modes, metric hints and on-call " +
+                "contacts. Use it to understand a service's dependencies and " +
+                "typical failures before investigating.",
     )
     fun getServiceProfile(serviceId: String): ServiceProfile? =
         serviceProfileService.findByServiceId(serviceId).blockingGet()
