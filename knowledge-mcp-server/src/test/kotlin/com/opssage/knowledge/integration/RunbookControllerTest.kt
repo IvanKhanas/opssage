@@ -68,12 +68,16 @@ class RunbookControllerTest {
             CreateRunbookRequest(
                 serviceId = "payment-svc",
                 title = "High Latency Runbook",
+                triggerType = "ALERT",
                 description = "Steps to resolve high latency",
+                symptoms = listOf("p99 latency above 1s"),
                 steps =
                     listOf(
                         "Check metrics dashboard",
                         "Restart payment pods",
                     ),
+                recommendedTools = listOf("get_service_health"),
+                dangerNotes = listOf("Do not restart during settlement"),
                 tags = listOf("latency", "payment"),
             )
 
@@ -93,6 +97,10 @@ class RunbookControllerTest {
         assertThat(created.id).isNotNull()
         assertThat(created.title).isEqualTo(request.title)
         assertThat(created.serviceId).isEqualTo("payment-svc")
+        assertThat(created.triggerType).isEqualTo("ALERT")
+        assertThat(created.symptoms).containsExactly("p99 latency above 1s")
+        assertThat(created.dangerNotes)
+            .containsExactly("Do not restart during settlement")
     }
 
     @Test

@@ -32,8 +32,10 @@ class RunbookMcpTools(
 
     @Tool(
         description =
-            "Retrieve all runbooks for a given service. " +
-                "Use this to find response procedures relevant to the current incident.",
+            "Retrieve all runbooks for a given service. Each runbook " +
+                "lists its trigger type, symptoms, ordered steps, " +
+                "recommended tools and danger notes. Use this to find " +
+                "response procedures relevant to the current incident.",
     )
     fun getRunbooksForService(
         serviceId: String,
