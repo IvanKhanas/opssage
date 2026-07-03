@@ -15,10 +15,12 @@
  */
 package com.opssage.knowledge.controller
 
+import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.dto.CreateFactRequest
 import com.opssage.knowledge.model.Fact
 import com.opssage.knowledge.model.FactStatus
 import com.opssage.knowledge.service.FactService
+import com.opssage.knowledge.util.paged
 import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -39,12 +41,18 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/facts")
 class FactController(
     private val factService: FactService,
+    private val pagination: PaginationProperties,
 ) {
 
     @GetMapping
     fun findAll(
         @RequestParam(required = false) status: FactStatus?,
-    ): Flux<Fact> = factService.findByStatus(status ?: FactStatus.PROPOSED)
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(required = false) size: Int?,
+    ): Flux<Fact> =
+        factService
+            .findByStatus(status ?: FactStatus.PROPOSED)
+            .paged(page, pagination.resolveSize(size))
 
     @GetMapping("/{id}")
     fun findById(

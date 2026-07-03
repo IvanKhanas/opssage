@@ -16,25 +16,39 @@
 package com.opssage.knowledge.config
 
 import com.opssage.knowledge.mcp.FactMcpTools
+import com.opssage.knowledge.mcp.InvestigationSummaryMcpTools
+import com.opssage.knowledge.mcp.KnownIncidentMcpTools
 import com.opssage.knowledge.mcp.RunbookMcpTools
 import com.opssage.knowledge.mcp.ServiceProfileMcpTools
+import com.opssage.knowledge.mcp.SkillMcpTools
 
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.ai.tool.method.MethodToolCallbackProvider
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@EnableConfigurationProperties(PaginationProperties::class)
 class McpConfig {
 
     @Bean
     fun toolCallbackProvider(
         factMcpTools: FactMcpTools,
+        investigationSummaryMcpTools: InvestigationSummaryMcpTools,
+        knownIncidentMcpTools: KnownIncidentMcpTools,
         runbookMcpTools: RunbookMcpTools,
         serviceProfileMcpTools: ServiceProfileMcpTools,
+        skillMcpTools: SkillMcpTools,
     ): ToolCallbackProvider =
         MethodToolCallbackProvider
             .builder()
-            .toolObjects(factMcpTools, runbookMcpTools, serviceProfileMcpTools)
-            .build()
+            .toolObjects(
+                factMcpTools,
+                investigationSummaryMcpTools,
+                knownIncidentMcpTools,
+                runbookMcpTools,
+                serviceProfileMcpTools,
+                skillMcpTools,
+            ).build()
 }

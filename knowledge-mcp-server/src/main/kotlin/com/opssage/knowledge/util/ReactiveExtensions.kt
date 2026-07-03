@@ -31,6 +31,11 @@ fun <T : Any> Flux<T>.blockingList(): List<T> {
 
 fun <T : Any> Mono<T>.blockingGet(): T? = onWorker().block()
 
+fun <T : Any> Flux<T>.paged(
+    page: Int,
+    size: Int,
+): Flux<T> = skip(maxOf(page, 0).toLong() * size).take(size.toLong())
+
 fun <T : Any> Mono<T>.orNotFound(
     resource: String,
     id: String,
