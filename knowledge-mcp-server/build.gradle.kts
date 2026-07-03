@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.spring.boot.starter.webflux)
     implementation(libs.spring.boot.starter.data.mongodb.reactive)
     implementation(libs.spring.boot.starter.validation)
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.spring.ai.mcp.server)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.reactor)
