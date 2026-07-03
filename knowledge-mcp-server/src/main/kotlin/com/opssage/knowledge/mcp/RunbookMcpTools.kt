@@ -15,9 +15,11 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.model.Runbook
 import com.opssage.knowledge.service.RunbookService
 import com.opssage.knowledge.util.blockingList
+import com.opssage.knowledge.util.paged
 
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.stereotype.Component
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component
 @Component
 class RunbookMcpTools(
     private val runbookService: RunbookService,
+    private val pagination: PaginationProperties,
 ) {
 
     @Tool(
@@ -32,14 +35,26 @@ class RunbookMcpTools(
             "Retrieve all runbooks for a given service. " +
                 "Use this to find response procedures relevant to the current incident.",
     )
-    fun getRunbooksForService(serviceId: String): List<Runbook> =
-        runbookService.findByService(serviceId).blockingList()
+    fun getRunbooksForService(
+        serviceId: String,
+        limit: Int?,
+    ): List<Runbook> =
+        runbookService
+            .findByService(serviceId)
+            .paged(0, pagination.resolveSize(limit))
+            .blockingList()
 
     @Tool(
         description =
             "Find runbooks associated with a specific alert name " +
                 "from vmalert or Alertmanager.",
     )
-    fun getRunbooksByAlert(alertName: String): List<Runbook> =
-        runbookService.findByAlert(alertName).blockingList()
+    fun getRunbooksByAlert(
+        alertName: String,
+        limit: Int?,
+    ): List<Runbook> =
+        runbookService
+            .findByAlert(alertName)
+            .paged(0, pagination.resolveSize(limit))
+            .blockingList()
 }

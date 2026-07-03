@@ -9,6 +9,11 @@ spring:
         name: knowledge-mcp-server
         version: 1.0.0
 
+knowledge:
+  pagination:
+    default-page-size: ${KNOWLEDGE_PAGE_SIZE:20}
+    max-page-size: ${KNOWLEDGE_MAX_PAGE_SIZE:100}
+
 server:
   port: ${SERVER_PORT:8082}
 

@@ -15,10 +15,12 @@
  */
 package com.opssage.knowledge.controller
 
+import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.dto.CreateRunbookRequest
 import com.opssage.knowledge.dto.UpdateRunbookRequest
 import com.opssage.knowledge.model.Runbook
 import com.opssage.knowledge.service.RunbookService
+import com.opssage.knowledge.util.paged
 import jakarta.validation.Valid
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -39,15 +41,20 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/runbooks")
 class RunbookController(
     private val runbookService: RunbookService,
+    private val pagination: PaginationProperties,
 ) {
 
     @GetMapping
     fun findAll(
         @RequestParam(required = false) serviceId: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(required = false) size: Int?,
     ): Flux<Runbook> =
-        serviceId
-            ?.let { runbookService.findByService(it) }
-            ?: runbookService.findAll()
+        (
+            serviceId
+                ?.let { runbookService.findByService(it) }
+                ?: runbookService.findAll()
+        ).paged(page, pagination.resolveSize(size))
 
     @GetMapping("/{id}")
     fun findById(

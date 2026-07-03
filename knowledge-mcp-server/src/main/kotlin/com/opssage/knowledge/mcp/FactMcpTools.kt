@@ -15,9 +15,14 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.PaginationProperties
+import com.opssage.knowledge.model.Confidence
 import com.opssage.knowledge.model.Fact
+import com.opssage.knowledge.model.FactProposal
 import com.opssage.knowledge.service.FactService
+import com.opssage.knowledge.util.blockingGet
 import com.opssage.knowledge.util.blockingList
+import com.opssage.knowledge.util.paged
 
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.stereotype.Component
@@ -25,6 +30,7 @@ import org.springframework.stereotype.Component
 @Component
 class FactMcpTools(
     private val factService: FactService,
+    private val pagination: PaginationProperties,
 ) {
 
     @Tool(
@@ -32,22 +38,72 @@ class FactMcpTools(
             "Retrieve all approved diagnostic facts for a given service. " +
                 "Use this to check if similar incidents have been investigated before.",
     )
-    fun getFactsForService(serviceId: String): List<Fact> =
-        factService.findApprovedByService(serviceId).blockingList()
+    fun getFactsForService(
+        serviceId: String,
+        limit: Int?,
+    ): List<Fact> =
+        factService
+            .findApprovedByService(serviceId)
+            .paged(0, pagination.resolveSize(limit))
+            .blockingList()
 
     @Tool(
         description =
             "Search approved facts by symptom keyword. " +
                 "Useful for finding known patterns that match observed behavior.",
     )
-    fun searchFacts(keyword: String): List<Fact> =
-        factService.searchApprovedBySymptom(keyword).blockingList()
+    fun searchFacts(
+        keyword: String,
+        limit: Int?,
+    ): List<Fact> =
+        factService
+            .searchApprovedBySymptom(keyword)
+            .paged(0, pagination.resolveSize(limit))
+            .blockingList()
 
     @Tool(
         description =
             "Get approved facts matching a specific tag " +
                 "such as 'latency', 'mongodb', 'oom'.",
     )
-    fun getFactsByTag(tag: String): List<Fact> =
-        factService.findApprovedByTag(tag).blockingList()
+    fun getFactsByTag(
+        tag: String,
+        limit: Int?,
+    ): List<Fact> =
+        factService
+            .findApprovedByTag(tag)
+            .paged(0, pagination.resolveSize(limit))
+            .blockingList()
+
+    @Tool(
+        description =
+            "Propose a new diagnostic fact discovered during an " +
+                "investigation. The fact is stored as PROPOSED and is never " +
+                "trusted automatically: a human must review and approve it " +
+                "before it becomes searchable. Provide the affected service, " +
+                "the observed symptom, the root cause, an optional " +
+                "resolution, optional tags, a confidence (LOW, MEDIUM or " +
+                "HIGH) and the originating investigation id.",
+    )
+    fun proposeInvestigationFact(
+        serviceId: String,
+        symptom: String,
+        rootCause: String,
+        resolution: String?,
+        tags: List<String>,
+        confidence: Confidence,
+        investigationId: String?,
+    ): Fact =
+        factService
+            .create(
+                FactProposal(
+                    serviceId = serviceId,
+                    symptom = symptom,
+                    rootCause = rootCause,
+                    resolution = resolution,
+                    tags = tags,
+                    confidence = confidence,
+                    investigationId = investigationId,
+                ),
+            ).blockingGet()!!
 }

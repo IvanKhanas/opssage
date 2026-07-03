@@ -72,6 +72,16 @@ class GlobalExceptionHandler {
             error.message,
         )
 
+    @ExceptionHandler(InvalidSkillProposalStateException::class)
+    fun handleSkillStateConflict(
+        error: InvalidSkillProposalStateException,
+    ): ErrorResponse =
+        response(
+            HttpStatus.CONFLICT,
+            "INVALID_STATE_TRANSITION",
+            error.message,
+        )
+
     @ExceptionHandler(InvalidRequestException::class)
     fun handleInvalidRequest(error: InvalidRequestException): ErrorResponse =
         response(
