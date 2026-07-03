@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.spring.ai.mcp.server)
+    implementation(libs.spring.ai.transformers.starter)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.reactor)
 

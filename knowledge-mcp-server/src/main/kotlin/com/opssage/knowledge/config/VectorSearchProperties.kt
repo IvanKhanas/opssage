@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.knowledge.model
+package com.opssage.knowledge.config
 
-data class FactProposal(
-    val serviceId: String,
-    val symptom: String,
-    val rootCause: String,
-    val resolution: String? = null,
-    val confidence: Confidence = Confidence.MEDIUM,
-    val investigationId: String? = null,
+import org.springframework.boot.context.properties.ConfigurationProperties
+
+@ConfigurationProperties("knowledge.vector-search")
+data class VectorSearchProperties(
+    val indexName: String,
+    val dimensions: Int,
+    val candidatesMultiplier: Int,
 )

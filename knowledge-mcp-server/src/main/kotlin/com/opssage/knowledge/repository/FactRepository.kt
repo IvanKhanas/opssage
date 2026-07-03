@@ -24,20 +24,12 @@ interface FactRepository {
 
     fun findById(id: String): Mono<Fact>
 
+    fun findAll(): Flux<Fact>
+
     fun findByStatus(status: FactStatus): Flux<Fact>
 
     fun findByServiceIdAndStatus(
         serviceId: String,
-        status: FactStatus,
-    ): Flux<Fact>
-
-    fun findByTagsContainsAndStatus(
-        tag: String,
-        status: FactStatus,
-    ): Flux<Fact>
-
-    fun findBySymptomContainingIgnoreCaseAndStatus(
-        keyword: String,
         status: FactStatus,
     ): Flux<Fact>
 

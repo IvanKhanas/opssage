@@ -13,6 +13,13 @@ knowledge:
   pagination:
     default-page-size: ${KNOWLEDGE_PAGE_SIZE:20}
     max-page-size: ${KNOWLEDGE_MAX_PAGE_SIZE:100}
+  vector-search:
+    index-name: ${FACT_VECTOR_INDEX:fact-vector-index}
+    dimensions: ${FACT_VECTOR_DIMENSIONS:384}
+    candidates-multiplier: ${FACT_VECTOR_CANDIDATES_MULTIPLIER:20}
+  reconciliation:
+    embed-concurrency: ${FACT_EMBED_CONCURRENCY:4}
+    backfill-timeout: ${FACT_BACKFILL_TIMEOUT:5m}
 
 server:
   port: ${SERVER_PORT:8082}

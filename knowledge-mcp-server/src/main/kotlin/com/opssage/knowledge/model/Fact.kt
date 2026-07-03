@@ -15,6 +15,8 @@
  */
 package com.opssage.knowledge.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
@@ -28,11 +30,12 @@ data class Fact(
     val symptom: String,
     val rootCause: String,
     val resolution: String? = null,
-    val tags: List<String> = emptyList(),
     val status: FactStatus = FactStatus.PROPOSED,
     val confidence: Confidence = Confidence.MEDIUM,
     val investigationId: String? = null,
     val createdAt: Instant = Instant.now(),
     val approvedBy: String? = null,
     val approvedAt: Instant? = null,
+    @get:JsonIgnore
+    val embedding: List<Double> = emptyList(),
 )

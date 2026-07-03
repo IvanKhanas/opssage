@@ -29,6 +29,8 @@ class MongoFactRepository(
 
     override fun findById(id: String): Mono<Fact> = repository.findById(id)
 
+    override fun findAll(): Flux<Fact> = repository.findAll()
+
     override fun findByStatus(status: FactStatus): Flux<Fact> =
         repository.findByStatus(status)
 
@@ -36,17 +38,6 @@ class MongoFactRepository(
         serviceId: String,
         status: FactStatus,
     ): Flux<Fact> = repository.findByServiceIdAndStatus(serviceId, status)
-
-    override fun findByTagsContainsAndStatus(
-        tag: String,
-        status: FactStatus,
-    ): Flux<Fact> = repository.findByTagsContainsAndStatus(tag, status)
-
-    override fun findBySymptomContainingIgnoreCaseAndStatus(
-        keyword: String,
-        status: FactStatus,
-    ): Flux<Fact> =
-        repository.findBySymptomContainingIgnoreCaseAndStatus(keyword, status)
 
     override fun save(fact: Fact): Mono<Fact> = repository.save(fact)
 

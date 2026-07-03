@@ -49,30 +49,20 @@ class FactMcpTools(
 
     @Tool(
         description =
-            "Search approved facts by symptom keyword. " +
-                "Useful for finding known patterns that match observed behavior.",
+            "Semantically search approved facts by a free-text symptom " +
+                "description. Returns the facts whose symptom and root cause " +
+                "are most similar in meaning to the query, ranked by " +
+                "relevance. Optionally restrict the search to a single " +
+                "service. Prefer this over exact keyword matching: it finds " +
+                "related incidents even when the wording differs.",
     )
     fun searchFacts(
-        keyword: String,
+        symptoms: String,
+        serviceId: String?,
         limit: Int?,
     ): List<Fact> =
         factService
-            .searchApprovedBySymptom(keyword)
-            .paged(0, pagination.resolveSize(limit))
-            .blockingList()
-
-    @Tool(
-        description =
-            "Get approved facts matching a specific tag " +
-                "such as 'latency', 'mongodb', 'oom'.",
-    )
-    fun getFactsByTag(
-        tag: String,
-        limit: Int?,
-    ): List<Fact> =
-        factService
-            .findApprovedByTag(tag)
-            .paged(0, pagination.resolveSize(limit))
+            .searchApproved(symptoms, serviceId, pagination.resolveSize(limit))
             .blockingList()
 
     @Tool(
@@ -82,15 +72,14 @@ class FactMcpTools(
                 "trusted automatically: a human must review and approve it " +
                 "before it becomes searchable. Provide the affected service, " +
                 "the observed symptom, the root cause, an optional " +
-                "resolution, optional tags, a confidence (LOW, MEDIUM or " +
-                "HIGH) and the originating investigation id.",
+                "resolution, a confidence (LOW, MEDIUM or HIGH) and the " +
+                "originating investigation id.",
     )
     fun proposeInvestigationFact(
         serviceId: String,
         symptom: String,
         rootCause: String,
         resolution: String?,
-        tags: List<String>,
         confidence: Confidence,
         investigationId: String?,
     ): Fact =
@@ -101,9 +90,9 @@ class FactMcpTools(
                     symptom = symptom,
                     rootCause = rootCause,
                     resolution = resolution,
-                    tags = tags,
                     confidence = confidence,
                     investigationId = investigationId,
                 ),
-            ).blockingGet()!!
+            ).blockingGet()
+            ?: error("Fact proposal was not persisted")
 }

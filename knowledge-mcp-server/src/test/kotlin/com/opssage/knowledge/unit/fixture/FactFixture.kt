@@ -32,7 +32,6 @@ object FactFixture {
         symptom: String = faker.lorem().sentence(),
         rootCause: String = faker.lorem().sentence(),
         status: FactStatus = FactStatus.PROPOSED,
-        tags: List<String> = listOf("latency", "db"),
         confidence: Confidence = Confidence.MEDIUM,
     ) = Fact(
         id = id,
@@ -40,7 +39,6 @@ object FactFixture {
         symptom = symptom,
         rootCause = rootCause,
         status = status,
-        tags = tags,
         confidence = confidence,
     )
 }

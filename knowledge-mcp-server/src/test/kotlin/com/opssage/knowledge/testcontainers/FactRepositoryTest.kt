@@ -21,8 +21,6 @@ import com.opssage.knowledge.unit.fixture.FactFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -96,81 +94,5 @@ class FactRepositoryTest {
 
         assertThat(result).hasSize(1)
         assertThat(result.first().serviceId).isEqualTo("payment-svc")
-    }
-
-    @Test
-    fun `findByTagsContainsAndStatus filters by tag and status`() {
-        repository
-            .saveAll(
-                listOf(
-                    FactFixture.fact(
-                        id = null,
-                        tags = listOf("mongodb", "latency"),
-                        status = FactStatus.APPROVED,
-                    ),
-                    FactFixture.fact(
-                        id = null,
-                        tags = listOf("redis"),
-                        status = FactStatus.APPROVED,
-                    ),
-                ),
-            ).collectList()
-            .block()
-
-        val result =
-            repository
-                .findByTagsContainsAndStatus("mongodb", FactStatus.APPROVED)
-                .collectList()
-                .block()!!
-
-        assertThat(result).hasSize(1)
-        assertThat(result.first().tags).contains("mongodb")
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["TIMEOUT", "Timeout", "timeout"])
-    fun `findBySymptomContainingIgnoreCaseAndStatus is case-insensitive`(
-        keyword: String,
-    ) {
-        repository
-            .save(
-                FactFixture.fact(
-                    id = null,
-                    symptom = "Connection timeout after 30s",
-                    status = FactStatus.APPROVED,
-                ),
-            ).block()
-
-        val result =
-            repository
-                .findBySymptomContainingIgnoreCaseAndStatus(
-                    keyword,
-                    FactStatus.APPROVED,
-                ).collectList()
-                .block()!!
-
-        assertThat(result).hasSize(1)
-    }
-
-    @Test
-    fun `symptom search excludes non-approved facts`() {
-        repository
-            .save(
-                FactFixture.fact(
-                    id = null,
-                    symptom = "high latency spike",
-                    status = FactStatus.PROPOSED,
-                ),
-            ).block()
-
-        val result =
-            repository
-                .findBySymptomContainingIgnoreCaseAndStatus(
-                    "latency",
-                    FactStatus.APPROVED,
-                ).collectList()
-                .block()!!
-
-        assertThat(result).isEmpty()
     }
 }

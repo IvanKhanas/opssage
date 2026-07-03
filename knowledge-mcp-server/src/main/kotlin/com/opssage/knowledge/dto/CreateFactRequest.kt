@@ -32,12 +32,6 @@ data class CreateFactRequest(
     val rootCause: String,
     @field:Size(max = 4_000)
     val resolution: String? = null,
-    @field:Size(max = 50)
-    val tags: List<
-        @NotBlank
-        @Size(max = 64)
-        String,
-    > = emptyList(),
     val confidence: Confidence = Confidence.MEDIUM,
     @field:Size(max = 128)
     val investigationId: String? = null,
@@ -49,7 +43,6 @@ data class CreateFactRequest(
             symptom = symptom,
             rootCause = rootCause,
             resolution = resolution,
-            tags = tags,
             confidence = confidence,
             investigationId = investigationId,
         )

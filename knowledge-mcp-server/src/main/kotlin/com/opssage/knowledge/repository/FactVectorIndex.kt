@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.knowledge.model
+package com.opssage.knowledge.repository
 
-data class FactProposal(
-    val serviceId: String,
-    val symptom: String,
-    val rootCause: String,
-    val resolution: String? = null,
-    val confidence: Confidence = Confidence.MEDIUM,
-    val investigationId: String? = null,
-)
+import com.opssage.knowledge.model.Fact
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+
+interface FactVectorIndex {
+
+    fun embedding(fact: Fact): Mono<List<Double>>
+
+    fun search(
+        query: String,
+        serviceId: String?,
+        topK: Int,
+    ): Flux<Fact>
+}

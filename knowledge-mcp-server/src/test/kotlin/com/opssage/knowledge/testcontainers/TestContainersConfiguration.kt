@@ -15,17 +15,24 @@
  */
 package com.opssage.knowledge.testcontainers
 
-import org.testcontainers.containers.MongoDBContainer
+import org.testcontainers.mongodb.MongoDBAtlasLocalContainer
 
 import org.springframework.test.context.DynamicPropertyRegistry
 
 object TestContainersConfiguration {
 
-    val mongoContainer: MongoDBContainer =
-        MongoDBContainer("mongo:7.0")
-            .also { it.start() }
+    val mongoContainer: MongoDBAtlasLocalContainer =
+        MongoDBAtlasLocalContainer(
+            "mongodb/mongodb-atlas-local:8.0",
+        ).also { it.start() }
 
     fun configure(registry: DynamicPropertyRegistry) {
-        registry.add("spring.mongodb.uri") { mongoContainer.replicaSetUrl }
+        registry.add("spring.mongodb.uri") { connectionString() }
     }
+
+    private fun connectionString(): String =
+        mongoContainer.connectionString.replace(
+            "/?",
+            "/opssage-knowledge?",
+        )
 }

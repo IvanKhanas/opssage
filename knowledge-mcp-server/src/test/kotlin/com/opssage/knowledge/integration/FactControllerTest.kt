@@ -70,7 +70,6 @@ class FactControllerTest {
                 symptom = fact.symptom,
                 rootCause = fact.rootCause,
                 resolution = fact.resolution,
-                tags = fact.tags,
                 confidence = fact.confidence,
                 investigationId = fact.investigationId,
             )

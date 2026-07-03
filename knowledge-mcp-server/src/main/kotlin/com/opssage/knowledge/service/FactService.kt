@@ -21,6 +21,7 @@ import com.opssage.knowledge.model.Fact
 import com.opssage.knowledge.model.FactProposal
 import com.opssage.knowledge.model.FactStatus
 import com.opssage.knowledge.repository.FactRepository
+import com.opssage.knowledge.repository.FactVectorIndex
 import com.opssage.knowledge.util.orNotFound
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -35,6 +36,7 @@ private typealias Facts = Flux<Fact>
 @Service
 class FactService(
     private val repo: FactRepository,
+    private val index: FactVectorIndex,
 ) {
 
     fun findById(id: String): Mono<Fact> =
@@ -47,30 +49,28 @@ class FactService(
     fun findApprovedByService(serviceId: String): Facts =
         repo.findByServiceIdAndStatus(serviceId, FactStatus.APPROVED)
 
-    fun findApprovedByTag(tag: String): Facts =
-        repo.findByTagsContainsAndStatus(
-            tag,
-            FactStatus.APPROVED,
-        )
+    fun searchApproved(
+        query: String,
+        serviceId: String?,
+        topK: Int,
+    ): Facts = index.search(query, serviceId, topK)
 
-    fun searchApprovedBySymptom(keyword: String): Facts =
-        repo.findBySymptomContainingIgnoreCaseAndStatus(
-            keyword,
-            FactStatus.APPROVED,
-        )
-
-    fun create(proposal: FactProposal): Mono<Fact> =
-        repo.save(
+    fun create(proposal: FactProposal): Mono<Fact> {
+        val fact =
             Fact(
                 serviceId = proposal.serviceId,
                 symptom = proposal.symptom,
                 rootCause = proposal.rootCause,
                 resolution = proposal.resolution,
-                tags = proposal.tags,
                 confidence = proposal.confidence,
                 investigationId = proposal.investigationId,
-            ),
-        )
+            )
+        return index
+            .embedding(fact)
+            .flatMap { embedding ->
+                repo.save(fact.copy(embedding = embedding))
+            }
+    }
 
     @Transactional
     fun approve(
@@ -98,13 +98,16 @@ class FactService(
                 )
             }
 
-            repo.save(
-                fact.copy(
-                    status = FactStatus.APPROVED,
-                    approvedBy = approvedBy,
-                    approvedAt = Instant.now(),
-                ),
-            )
+            withEmbedding(fact)
+                .flatMap { embedded ->
+                    repo.save(
+                        embedded.copy(
+                            status = FactStatus.APPROVED,
+                            approvedBy = approvedBy,
+                            approvedAt = Instant.now(),
+                        ),
+                    )
+                }
         }
     }
 
@@ -138,6 +141,17 @@ class FactService(
                 .findById(id)
                 .orNotFound("Fact", id)
 
-        return existing.flatMap { repo.deleteById(id) }
+        return existing.flatMap {
+            repo.deleteById(id)
+        }
+    }
+
+    private fun withEmbedding(fact: Fact): Mono<Fact> {
+        if (fact.embedding.isNotEmpty()) {
+            return Mono.just(fact)
+        }
+        return index
+            .embedding(fact)
+            .map { embedding -> fact.copy(embedding = embedding) }
     }
 }

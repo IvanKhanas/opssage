@@ -29,14 +29,4 @@ interface FactMongoRepository : ReactiveMongoRepository<Fact, String> {
     ): Flux<Fact>
 
     fun findByStatus(status: FactStatus): Flux<Fact>
-
-    fun findByTagsContainsAndStatus(
-        tag: String,
-        status: FactStatus,
-    ): Flux<Fact>
-
-    fun findBySymptomContainingIgnoreCaseAndStatus(
-        keyword: String,
-        status: FactStatus,
-    ): Flux<Fact>
 }
