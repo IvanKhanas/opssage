@@ -59,5 +59,6 @@ class InvestigationSummaryMcpTools(
                     evidence = evidence,
                     recommendedActions = recommendedActions,
                 ),
-            ).blockingGet()!!
+            ).blockingGet()
+            ?: error("Investigation summary was not persisted")
 }

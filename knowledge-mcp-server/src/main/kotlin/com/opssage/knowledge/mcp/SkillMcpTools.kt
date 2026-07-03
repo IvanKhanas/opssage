@@ -57,5 +57,6 @@ class SkillMcpTools(
                     motivation = motivation,
                     examples = examples,
                 ),
-            ).blockingGet()!!
+            ).blockingGet()
+            ?: error("Skill proposal was not persisted")
 }
