@@ -42,8 +42,6 @@ class RunbookService(
 
     fun findByAlert(alertName: String): Runs = repo.findByAlertName(alertName)
 
-    fun findByTag(tag: String): Runs = repo.findByTagsContains(tag)
-
     fun findAll(): Runs = repo.findAll()
 
     fun create(runbook: Runbook): Mono<Runbook> = repo.save(runbook)

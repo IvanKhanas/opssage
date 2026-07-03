@@ -33,7 +33,6 @@ data class Runbook(
     val steps: List<String>,
     val recommendedTools: List<String> = emptyList(),
     val dangerNotes: List<String> = emptyList(),
-    val tags: List<String> = emptyList(),
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = Instant.now(),
 )

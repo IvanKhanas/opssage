@@ -78,7 +78,6 @@ class RunbookControllerTest {
                     ),
                 recommendedTools = listOf("get_service_health"),
                 dangerNotes = listOf("Do not restart during settlement"),
-                tags = listOf("latency", "payment"),
             )
 
         val created =

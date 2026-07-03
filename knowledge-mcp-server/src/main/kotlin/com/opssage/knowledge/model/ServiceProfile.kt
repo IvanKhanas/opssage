@@ -36,6 +36,5 @@ data class ServiceProfile(
     val commonFailureModes: List<String> = emptyList(),
     val metricHints: List<String> = emptyList(),
     val contacts: List<String> = emptyList(),
-    val tags: List<String> = emptyList(),
     val updatedAt: Instant = Instant.now(),
 )

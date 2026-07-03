@@ -57,12 +57,6 @@ data class CreateRunbookRequest(
         @Size(max = 2_000)
         String,
     > = emptyList(),
-    @field:Size(max = 50)
-    val tags: List<
-        @NotBlank
-        @Size(max = 64)
-        String,
-    > = emptyList(),
 ) {
 
     fun toRunbook(): Runbook =
@@ -76,6 +70,5 @@ data class CreateRunbookRequest(
             steps = steps,
             recommendedTools = recommendedTools,
             dangerNotes = dangerNotes,
-            tags = tags,
         )
 }

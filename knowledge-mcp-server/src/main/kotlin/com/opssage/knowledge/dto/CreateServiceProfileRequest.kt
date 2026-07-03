@@ -76,12 +76,6 @@ data class CreateServiceProfileRequest(
         @Size(max = 256)
         String,
     > = emptyList(),
-    @field:Size(max = 50)
-    val tags: List<
-        @NotBlank
-        @Size(max = 64)
-        String,
-    > = emptyList(),
 ) {
 
     fun toServiceProfile(): ServiceProfile =
@@ -98,6 +92,5 @@ data class CreateServiceProfileRequest(
             commonFailureModes = commonFailureModes,
             metricHints = metricHints,
             contacts = contacts,
-            tags = tags,
         )
 }
