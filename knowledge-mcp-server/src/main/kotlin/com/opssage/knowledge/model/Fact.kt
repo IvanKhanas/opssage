@@ -20,12 +20,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "facts")
 data class Fact(
     @Id val id: String? = null,
+    @Version val version: Long? = null,
     @Indexed val serviceId: String,
     val symptom: String,
     val rootCause: String,

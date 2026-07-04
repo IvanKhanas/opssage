@@ -18,12 +18,14 @@ package com.opssage.knowledge.model
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "service_profiles")
 data class ServiceProfile(
     @Id val id: String? = null,
+    @Version val version: Long? = null,
     @Indexed(unique = true) val serviceId: String,
     val displayName: String,
     val description: String,
