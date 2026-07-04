@@ -15,6 +15,7 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.McpProperties
 import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.model.Confidence
 import com.opssage.knowledge.model.Fact
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component
 class FactMcpTools(
     private val factService: FactService,
     private val pagination: PaginationProperties,
+    private val mcp: McpProperties,
 ) {
 
     @Tool(
@@ -45,7 +47,7 @@ class FactMcpTools(
         factService
             .findApprovedByService(serviceId)
             .paged(0, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 
     @Tool(
         description =
@@ -63,7 +65,7 @@ class FactMcpTools(
     ): List<Fact> =
         factService
             .searchApproved(symptoms, serviceId, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 
     @Tool(
         description =
@@ -93,6 +95,6 @@ class FactMcpTools(
                     confidence = confidence,
                     investigationId = investigationId,
                 ),
-            ).blockingGet()
+            ).blockingGet(mcp.callTimeout)
             ?: error("Fact proposal was not persisted")
 }

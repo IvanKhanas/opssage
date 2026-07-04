@@ -15,6 +15,7 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.McpProperties
 import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.model.Runbook
 import com.opssage.knowledge.service.RunbookService
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component
 class RunbookMcpTools(
     private val runbookService: RunbookService,
     private val pagination: PaginationProperties,
+    private val mcp: McpProperties,
 ) {
 
     @Tool(
@@ -44,7 +46,7 @@ class RunbookMcpTools(
         runbookService
             .findByService(serviceId)
             .paged(0, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 
     @Tool(
         description =
@@ -58,5 +60,5 @@ class RunbookMcpTools(
         runbookService
             .findByAlert(alertName)
             .paged(0, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 }

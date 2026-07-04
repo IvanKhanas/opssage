@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration
     PaginationProperties::class,
     VectorSearchProperties::class,
     ReconciliationProperties::class,
+    McpProperties::class,
 )
 class McpConfig {
 

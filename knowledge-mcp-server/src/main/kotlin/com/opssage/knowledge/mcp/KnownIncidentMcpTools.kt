@@ -15,6 +15,7 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.McpProperties
 import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.model.KnownIncident
 import com.opssage.knowledge.service.KnownIncidentService
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component
 class KnownIncidentMcpTools(
     private val knownIncidentService: KnownIncidentService,
     private val pagination: PaginationProperties,
+    private val mcp: McpProperties,
 ) {
 
     @Tool(
@@ -43,7 +45,7 @@ class KnownIncidentMcpTools(
         knownIncidentService
             .findByService(serviceId)
             .paged(0, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 
     @Tool(
         description =
@@ -57,7 +59,7 @@ class KnownIncidentMcpTools(
         knownIncidentService
             .searchByTitle(keyword)
             .paged(0, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 
     @Tool(
         description =
@@ -72,5 +74,5 @@ class KnownIncidentMcpTools(
         knownIncidentService
             .findByRelatedService(serviceId)
             .paged(0, pagination.resolveSize(limit))
-            .blockingList()
+            .blockingList(mcp.callTimeout)
 }

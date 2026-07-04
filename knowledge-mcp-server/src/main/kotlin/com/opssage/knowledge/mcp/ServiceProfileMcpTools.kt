@@ -15,6 +15,7 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.McpProperties
 import com.opssage.knowledge.model.ServiceProfile
 import com.opssage.knowledge.service.ServiceProfileService
 import com.opssage.knowledge.util.blockingGet
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component
 @Component
 class ServiceProfileMcpTools(
     private val serviceProfileService: ServiceProfileService,
+    private val mcp: McpProperties,
 ) {
 
     @Tool(
@@ -36,5 +38,7 @@ class ServiceProfileMcpTools(
                 "typical failures before investigating.",
     )
     fun getServiceProfile(serviceId: String): ServiceProfile? =
-        serviceProfileService.findByServiceId(serviceId).blockingGet()
+        serviceProfileService
+            .findByServiceId(serviceId)
+            .blockingGet(mcp.callTimeout)
 }

@@ -20,6 +20,8 @@ knowledge:
   reconciliation:
     embed-concurrency: ${FACT_EMBED_CONCURRENCY:4}
     backfill-timeout: ${FACT_BACKFILL_TIMEOUT:5m}
+  mcp:
+    call-timeout: ${MCP_CALL_TIMEOUT:30s}
 
 server:
   port: ${SERVER_PORT:8082}
