@@ -16,6 +16,7 @@
 package com.opssage.knowledge.config
 
 import com.opssage.knowledge.model.Fact
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.bson.Document
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -37,6 +38,8 @@ class AtlasVectorIndexInitializer(
     private val model: EmbeddingModel,
     private val properties: VectorSearchProperties,
 ) {
+
+    private val log = KotlinLogging.logger {}
 
     @Order(0)
     @EventListener(ApplicationReadyEvent::class)
@@ -69,14 +72,60 @@ class AtlasVectorIndexInitializer(
 
     private fun ensureIndex(): Mono<Void> =
         findIndex()
-            .hasElements()
-            .flatMap { exists ->
-                if (exists) {
-                    Mono.empty()
-                } else {
-                    mongo.executeCommand(createIndexCommand()).then()
-                }
+            .next()
+            .flatMap { existing -> reconcileExisting(existing) }
+            .switchIfEmpty(createIndex())
+            .then()
+
+    private fun reconcileExisting(existing: Document): Mono<Boolean> {
+        if (matchesDesired(existing)) {
+            return Mono.just(true)
+        }
+        log.atWarn {
+            message = "Atlas vector index definition drifted, updating"
+            payload =
+                mapOf(
+                    "index" to properties.indexName,
+                    "dimensions" to properties.dimensions,
+                )
+        }
+        return mongo.executeCommand(updateIndexCommand()).thenReturn(true)
+    }
+
+    private fun createIndex(): Mono<Boolean> =
+        Mono.defer {
+            log.atInfo {
+                message = "Creating Atlas vector index"
+                payload =
+                    mapOf(
+                        "index" to properties.indexName,
+                        "dimensions" to properties.dimensions,
+                    )
             }
+            mongo.executeCommand(createIndexCommand()).thenReturn(true)
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun matchesDesired(existing: Document): Boolean {
+        val definition =
+            existing.get(LATEST_DEFINITION, Document::class.java)
+                ?: return false
+        val fields =
+            definition.get(FIELDS, List::class.java) as? List<Document>
+                ?: return false
+        val vector = fields.firstOrNull { it.getString(TYPE) == TYPE_VECTOR }
+        val vectorOk =
+            vector != null &&
+                vector.getString(PATH) == EMBEDDING_PATH &&
+                vector.getInteger(NUM_DIMENSIONS) == properties.dimensions &&
+                vector.getString(SIMILARITY) == SIMILARITY_COSINE
+        val filterPaths =
+            fields
+                .filter { it.getString(TYPE) == TYPE_FILTER }
+                .mapNotNull { it.getString(PATH) }
+                .toSet()
+        return vectorOk && filterPaths == DESIRED_FILTER_PATHS
+    }
 
     private fun waitUntilReady(): Mono<Void> =
         Flux
@@ -114,34 +163,48 @@ class AtlasVectorIndexInitializer(
                 "indexes",
                 listOf(
                     Document("name", properties.indexName)
-                        .append("type", "vectorSearch")
+                        .append(TYPE, INDEX_TYPE_VECTOR_SEARCH)
                         .append("definition", indexDefinition()),
                 ),
             )
 
+    private fun updateIndexCommand(): Document =
+        Document("updateSearchIndex", FACTS_COLLECTION)
+            .append("name", properties.indexName)
+            .append("definition", indexDefinition())
+
     private fun indexDefinition(): Document =
         Document(
-            "fields",
-            listOf(
-                vectorField(),
-                filterField("status"),
-                filterField("serviceId"),
-            ),
+            FIELDS,
+            listOf(vectorField()) +
+                DESIRED_FILTER_PATHS.map { path -> filterField(path) },
         )
 
     private fun vectorField(): Document =
-        Document("type", "vector")
-            .append("path", "embedding")
-            .append("numDimensions", properties.dimensions)
-            .append("similarity", "cosine")
+        Document(TYPE, TYPE_VECTOR)
+            .append(PATH, EMBEDDING_PATH)
+            .append(NUM_DIMENSIONS, properties.dimensions)
+            .append(SIMILARITY, SIMILARITY_COSINE)
 
     private fun filterField(path: String): Document =
-        Document("type", "filter").append("path", path)
+        Document(TYPE, TYPE_FILTER).append(PATH, path)
 
     private companion object {
         const val FACTS_COLLECTION = "facts"
         const val STATUS_FIELD = "status"
         const val READY_STATUS = "READY"
+        const val LATEST_DEFINITION = "latestDefinition"
+        const val FIELDS = "fields"
+        const val TYPE = "type"
+        const val PATH = "path"
+        const val TYPE_VECTOR = "vector"
+        const val TYPE_FILTER = "filter"
+        const val NUM_DIMENSIONS = "numDimensions"
+        const val SIMILARITY = "similarity"
+        const val SIMILARITY_COSINE = "cosine"
+        const val EMBEDDING_PATH = "embedding"
+        const val INDEX_TYPE_VECTOR_SEARCH = "vectorSearch"
+        val DESIRED_FILTER_PATHS = setOf("status", "serviceId")
         val POLL_INTERVAL: Duration = Duration.ofSeconds(1)
         val STARTUP_TIMEOUT: Duration = Duration.ofMinutes(2)
     }
