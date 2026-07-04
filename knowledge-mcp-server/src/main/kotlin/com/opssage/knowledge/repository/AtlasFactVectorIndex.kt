@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 
 import org.springframework.ai.embedding.EmbeddingModel
+import org.springframework.data.domain.Vector
 import org.springframework.data.mongodb.core.ReactiveMongoOperations
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.aggregation.VectorSearchOperation
@@ -36,7 +37,7 @@ class AtlasFactVectorIndex(
     private val properties: VectorSearchProperties,
 ) : FactVectorIndex {
 
-    override fun embedding(fact: Fact): Mono<List<Double>> =
+    override fun embedding(fact: Fact): Mono<Vector> =
         embed("${fact.symptom}\n${fact.rootCause}")
 
     override fun search(
@@ -55,14 +56,13 @@ class AtlasFactVectorIndex(
                 )
             }
 
-    private fun embed(text: String): Mono<List<Double>> =
+    private fun embed(text: String): Mono<Vector> =
         Mono
-            .fromCallable {
-                model.embed(text).map { value -> value.toDouble() }
-            }.subscribeOn(Schedulers.boundedElastic())
+            .fromCallable { Vector.of(*model.embed(text)) }
+            .subscribeOn(Schedulers.boundedElastic())
 
     private fun searchOperation(
-        vector: List<Double>,
+        vector: Vector,
         serviceId: String?,
         topK: Int,
     ): VectorSearchOperation {

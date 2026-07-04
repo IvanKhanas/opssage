@@ -21,6 +21,7 @@ import java.time.Instant
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Version
+import org.springframework.data.domain.Vector
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -39,5 +40,5 @@ data class Fact(
     val approvedBy: String? = null,
     val approvedAt: Instant? = null,
     @get:JsonIgnore
-    val embedding: List<Double> = emptyList(),
+    val embedding: Vector? = null,
 )

@@ -19,9 +19,11 @@ import com.opssage.knowledge.model.Fact
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+import org.springframework.data.domain.Vector
+
 interface FactVectorIndex {
 
-    fun embedding(fact: Fact): Mono<List<Double>>
+    fun embedding(fact: Fact): Mono<Vector>
 
     fun search(
         query: String,

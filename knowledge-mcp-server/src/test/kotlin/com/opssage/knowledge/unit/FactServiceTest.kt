@@ -40,6 +40,8 @@ import org.junit.jupiter.params.provider.EnumSource
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+import org.springframework.data.domain.Vector
+
 @ExtendWith(MockKExtension::class)
 class FactServiceTest {
 
@@ -243,6 +245,6 @@ class FactServiceTest {
     }
 
     private companion object {
-        val EMBEDDING = listOf(0.1, 0.2, 0.3)
+        val EMBEDDING: Vector = Vector.of(0.1, 0.2, 0.3)
     }
 }

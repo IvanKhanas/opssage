@@ -40,7 +40,7 @@ class FactIndexReconciler(
         val count =
             repo
                 .findAll()
-                .filter { fact -> fact.embedding.isEmpty() }
+                .filter { fact -> fact.embedding == null }
                 .flatMap({ fact ->
                     index
                         .embedding(fact)

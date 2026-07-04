@@ -147,7 +147,7 @@ class FactService(
     }
 
     private fun withEmbedding(fact: Fact): Mono<Fact> {
-        if (fact.embedding.isNotEmpty()) {
+        if (fact.embedding != null) {
             return Mono.just(fact)
         }
         return index
