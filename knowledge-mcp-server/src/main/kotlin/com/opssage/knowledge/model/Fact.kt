@@ -15,24 +15,30 @@
  */
 package com.opssage.knowledge.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
+import org.springframework.data.domain.Vector
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "facts")
 data class Fact(
     @Id val id: String? = null,
+    @Version val version: Long? = null,
     @Indexed val serviceId: String,
     val symptom: String,
     val rootCause: String,
     val resolution: String? = null,
-    val tags: List<String> = emptyList(),
     val status: FactStatus = FactStatus.PROPOSED,
     val confidence: Confidence = Confidence.MEDIUM,
     val investigationId: String? = null,
     val createdAt: Instant = Instant.now(),
     val approvedBy: String? = null,
     val approvedAt: Instant? = null,
+    @get:JsonIgnore
+    val embedding: Vector? = null,
 )

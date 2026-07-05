@@ -18,19 +18,25 @@ package com.opssage.knowledge.model
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "service_profiles")
 data class ServiceProfile(
     @Id val id: String? = null,
+    @Version val version: Long? = null,
     @Indexed(unique = true) val serviceId: String,
     val displayName: String,
     val description: String,
     val team: String,
     val criticality: Criticality,
-    val dependencies: List<String> = emptyList(),
+    val upstreamServices: List<String> = emptyList(),
+    val downstreamServices: List<String> = emptyList(),
+    val kafkaTopics: List<String> = emptyList(),
+    val importantEndpoints: List<String> = emptyList(),
+    val commonFailureModes: List<String> = emptyList(),
+    val metricHints: List<String> = emptyList(),
     val contacts: List<String> = emptyList(),
-    val tags: List<String> = emptyList(),
     val updatedAt: Instant = Instant.now(),
 )

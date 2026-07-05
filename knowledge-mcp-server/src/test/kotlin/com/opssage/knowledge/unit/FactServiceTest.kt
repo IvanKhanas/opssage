@@ -22,6 +22,7 @@ import com.opssage.knowledge.model.Fact
 import com.opssage.knowledge.model.FactProposal
 import com.opssage.knowledge.model.FactStatus
 import com.opssage.knowledge.repository.FactRepository
+import com.opssage.knowledge.repository.FactVectorIndex
 import com.opssage.knowledge.service.FactService
 import com.opssage.knowledge.unit.fixture.FactFixture
 import io.mockk.every
@@ -39,17 +40,22 @@ import org.junit.jupiter.params.provider.EnumSource
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
+import org.springframework.data.domain.Vector
+
 @ExtendWith(MockKExtension::class)
 class FactServiceTest {
 
     @MockK
     lateinit var repository: FactRepository
 
+    @MockK
+    lateinit var index: FactVectorIndex
+
     private lateinit var service: FactService
 
     @BeforeEach
     fun setUp() {
-        service = FactService(repository)
+        service = FactService(repository, index)
     }
 
     @Test
@@ -57,6 +63,7 @@ class FactServiceTest {
         val fact = FactFixture.fact(id = "fact-1", status = FactStatus.PROPOSED)
         val saved = slot<Fact>()
         every { repository.findById("fact-1") } returns Mono.just(fact)
+        every { index.embedding(fact) } returns Mono.just(EMBEDDING)
         every { repository.save(capture(saved)) } answers
             { Mono.just(saved.captured) }
 
@@ -65,6 +72,7 @@ class FactServiceTest {
         assertThat(result.status).isEqualTo(FactStatus.APPROVED)
         assertThat(result.approvedBy).isEqualTo("sre-bot")
         assertThat(result.approvedAt).isNotNull()
+        assertThat(result.embedding).isEqualTo(EMBEDDING)
     }
 
     @Test
@@ -72,6 +80,7 @@ class FactServiceTest {
         val fact = FactFixture.fact(id = "fact-2", symptom = "high latency")
         val saved = slot<Fact>()
         every { repository.findById("fact-2") } returns Mono.just(fact)
+        every { index.embedding(fact) } returns Mono.just(EMBEDDING)
         every { repository.save(capture(saved)) } answers
             { Mono.just(saved.captured) }
 
@@ -80,7 +89,6 @@ class FactServiceTest {
         assertThat(saved.captured.symptom).isEqualTo("high latency")
         assertThat(saved.captured.serviceId).isEqualTo(fact.serviceId)
         assertThat(saved.captured.rootCause).isEqualTo(fact.rootCause)
-        assertThat(saved.captured.tags).isEqualTo(fact.tags)
     }
 
     @ParameterizedTest
@@ -119,6 +127,7 @@ class FactServiceTest {
                 rootCause = "connection pool exhausted",
             )
         val saved = slot<Fact>()
+        every { index.embedding(any()) } returns Mono.just(EMBEDDING)
         every { repository.save(capture(saved)) } answers {
             Mono.just(saved.captured)
         }
@@ -129,6 +138,7 @@ class FactServiceTest {
         assertThat(saved.captured.status).isEqualTo(FactStatus.PROPOSED)
         assertThat(saved.captured.approvedBy).isNull()
         assertThat(saved.captured.approvedAt).isNull()
+        assertThat(saved.captured.embedding).isEqualTo(EMBEDDING)
     }
 
     @Test
@@ -216,37 +226,25 @@ class FactServiceTest {
     }
 
     @Test
-    fun `findApprovedByTag always passes APPROVED to repository`() {
+    fun `semantic search delegates query and filters to vector index`() {
+        val expected = FactFixture.fact(status = FactStatus.APPROVED)
         every {
-            repository.findByTagsContainsAndStatus("oom", FactStatus.APPROVED)
-        } returns Flux.empty()
+            index.search("connection timeout", "payment-svc", 5)
+        } returns Flux.just(expected)
 
-        service.findApprovedByTag("oom").collectList().block()
+        val result =
+            service
+                .searchApproved("connection timeout", "payment-svc", 5)
+                .collectList()
+                .block()
 
+        assertThat(result).containsExactly(expected)
         verify {
-            repository.findByTagsContainsAndStatus(
-                "oom",
-                FactStatus.APPROVED,
-            )
+            index.search("connection timeout", "payment-svc", 5)
         }
     }
 
-    @Test
-    fun `searchApprovedBySymptom always passes APPROVED to repository`() {
-        every {
-            repository.findBySymptomContainingIgnoreCaseAndStatus(
-                "timeout",
-                FactStatus.APPROVED,
-            )
-        } returns Flux.empty()
-
-        service.searchApprovedBySymptom("timeout").collectList().block()
-
-        verify {
-            repository.findBySymptomContainingIgnoreCaseAndStatus(
-                "timeout",
-                FactStatus.APPROVED,
-            )
-        }
+    private companion object {
+        val EMBEDDING: Vector = Vector.of(0.1, 0.2, 0.3)
     }
 }

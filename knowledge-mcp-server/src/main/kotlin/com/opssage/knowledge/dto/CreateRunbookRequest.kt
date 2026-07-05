@@ -28,9 +28,17 @@ data class CreateRunbookRequest(
     val title: String,
     @field:Size(max = 256)
     val alertName: String? = null,
+    @field:Size(max = 128)
+    val triggerType: String? = null,
     @field:NotBlank
     @field:Size(max = 4_000)
     val description: String,
+    @field:Size(max = 100)
+    val symptoms: List<
+        @NotBlank
+        @Size(max = 2_000)
+        String,
+    > = emptyList(),
     @field:Size(min = 1, max = 100)
     val steps: List<
         @NotBlank
@@ -38,9 +46,15 @@ data class CreateRunbookRequest(
         String,
     >,
     @field:Size(max = 50)
-    val tags: List<
+    val recommendedTools: List<
         @NotBlank
-        @Size(max = 64)
+        @Size(max = 128)
+        String,
+    > = emptyList(),
+    @field:Size(max = 100)
+    val dangerNotes: List<
+        @NotBlank
+        @Size(max = 2_000)
         String,
     > = emptyList(),
 ) {
@@ -50,8 +64,11 @@ data class CreateRunbookRequest(
             serviceId = serviceId,
             title = title,
             alertName = alertName,
+            triggerType = triggerType,
             description = description,
+            symptoms = symptoms,
             steps = steps,
-            tags = tags,
+            recommendedTools = recommendedTools,
+            dangerNotes = dangerNotes,
         )
 }

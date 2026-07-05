@@ -35,21 +35,45 @@ data class CreateServiceProfileRequest(
     val team: String,
     val criticality: Criticality,
     @field:Size(max = 100)
-    val dependencies: List<
+    val upstreamServices: List<
         @NotBlank
         @Size(max = 128)
+        String,
+    > = emptyList(),
+    @field:Size(max = 100)
+    val downstreamServices: List<
+        @NotBlank
+        @Size(max = 128)
+        String,
+    > = emptyList(),
+    @field:Size(max = 100)
+    val kafkaTopics: List<
+        @NotBlank
+        @Size(max = 256)
+        String,
+    > = emptyList(),
+    @field:Size(max = 100)
+    val importantEndpoints: List<
+        @NotBlank
+        @Size(max = 256)
+        String,
+    > = emptyList(),
+    @field:Size(max = 100)
+    val commonFailureModes: List<
+        @NotBlank
+        @Size(max = 2_000)
+        String,
+    > = emptyList(),
+    @field:Size(max = 100)
+    val metricHints: List<
+        @NotBlank
+        @Size(max = 2_000)
         String,
     > = emptyList(),
     @field:Size(max = 50)
     val contacts: List<
         @NotBlank
         @Size(max = 256)
-        String,
-    > = emptyList(),
-    @field:Size(max = 50)
-    val tags: List<
-        @NotBlank
-        @Size(max = 64)
         String,
     > = emptyList(),
 ) {
@@ -61,8 +85,12 @@ data class CreateServiceProfileRequest(
             description = description,
             team = team,
             criticality = criticality,
-            dependencies = dependencies,
+            upstreamServices = upstreamServices,
+            downstreamServices = downstreamServices,
+            kafkaTopics = kafkaTopics,
+            importantEndpoints = importantEndpoints,
+            commonFailureModes = commonFailureModes,
+            metricHints = metricHints,
             contacts = contacts,
-            tags = tags,
         )
 }

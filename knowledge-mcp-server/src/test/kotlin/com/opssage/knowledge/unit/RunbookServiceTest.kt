@@ -108,17 +108,6 @@ class RunbookServiceTest {
     }
 
     @Test
-    fun `findByTag delegates to repository with tag`() {
-        val runbook = RunbookFixture.runbook(tags = listOf("latency"))
-        every { repository.findByTagsContains("latency") } returns
-            Flux.just(runbook)
-
-        val result = service.findByTag("latency").collectList().block()!!
-
-        assertThat(result).hasSize(1)
-    }
-
-    @Test
     fun `create saves and returns the runbook`() {
         val runbook = RunbookFixture.runbook(id = null)
         val persisted = runbook.copy(id = "new-id")

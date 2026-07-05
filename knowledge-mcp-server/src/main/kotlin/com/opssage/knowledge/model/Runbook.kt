@@ -18,18 +18,23 @@ package com.opssage.knowledge.model
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "runbooks")
 data class Runbook(
     @Id val id: String? = null,
+    @Version val version: Long? = null,
     @Indexed val serviceId: String,
     val title: String,
     val alertName: String? = null,
+    val triggerType: String? = null,
     val description: String,
+    val symptoms: List<String> = emptyList(),
     val steps: List<String>,
-    val tags: List<String> = emptyList(),
+    val recommendedTools: List<String> = emptyList(),
+    val dangerNotes: List<String> = emptyList(),
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = Instant.now(),
 )

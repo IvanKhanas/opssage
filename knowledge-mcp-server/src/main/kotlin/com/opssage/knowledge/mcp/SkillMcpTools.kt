@@ -15,6 +15,7 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.McpProperties
 import com.opssage.knowledge.model.SkillProposal
 import com.opssage.knowledge.model.SkillProposalDraft
 import com.opssage.knowledge.service.SkillProposalService
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component
 @Component
 class SkillMcpTools(
     private val skillProposalService: SkillProposalService,
+    private val mcp: McpProperties,
 ) {
 
     @Tool(
@@ -57,5 +59,6 @@ class SkillMcpTools(
                     motivation = motivation,
                     examples = examples,
                 ),
-            ).blockingGet()!!
+            ).blockingGet(mcp.callTimeout)
+            ?: error("Skill proposal was not persisted")
 }

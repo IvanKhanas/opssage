@@ -29,7 +29,12 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-@EnableConfigurationProperties(PaginationProperties::class)
+@EnableConfigurationProperties(
+    PaginationProperties::class,
+    VectorSearchProperties::class,
+    ReconciliationProperties::class,
+    McpProperties::class,
+)
 class McpConfig {
 
     @Bean

@@ -35,7 +35,6 @@ object RunbookFixture {
                 faker.lorem().sentence(),
                 faker.lorem().sentence(),
             ),
-        tags: List<String> = listOf("latency"),
     ) = Runbook(
         id = id,
         serviceId = serviceId,
@@ -43,6 +42,5 @@ object RunbookFixture {
         alertName = alertName,
         description = description,
         steps = steps,
-        tags = tags,
     )
 }

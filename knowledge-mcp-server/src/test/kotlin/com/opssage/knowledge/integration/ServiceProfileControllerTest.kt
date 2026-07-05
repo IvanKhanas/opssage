@@ -72,7 +72,9 @@ class ServiceProfileControllerTest {
                 description = "Handles authentication and authorization",
                 team = "platform",
                 criticality = Criticality.HIGH,
-                dependencies = listOf("user-db"),
+                upstreamServices = listOf("gateway"),
+                downstreamServices = listOf("user-db"),
+                kafkaTopics = listOf("auth-events"),
             )
 
         val created =
@@ -91,6 +93,8 @@ class ServiceProfileControllerTest {
         assertThat(created.id).isNotNull()
         assertThat(created.serviceId).isEqualTo("auth-svc")
         assertThat(created.displayName).isEqualTo("Auth Service")
+        assertThat(created.downstreamServices).containsExactly("user-db")
+        assertThat(created.kafkaTopics).containsExactly("auth-events")
     }
 
     @Test

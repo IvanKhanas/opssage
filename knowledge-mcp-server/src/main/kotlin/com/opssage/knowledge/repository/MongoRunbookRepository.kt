@@ -36,9 +36,6 @@ class MongoRunbookRepository(
     override fun findByAlertName(alertName: String): Flux<Runbook> =
         repository.findByAlertName(alertName)
 
-    override fun findByTagsContains(tag: String): Flux<Runbook> =
-        repository.findByTagsContains(tag)
-
     override fun save(runbook: Runbook): Mono<Runbook> =
         repository.save(runbook)
 

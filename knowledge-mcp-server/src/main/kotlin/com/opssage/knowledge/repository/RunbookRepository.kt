@@ -29,8 +29,6 @@ interface RunbookRepository {
 
     fun findByAlertName(alertName: String): Flux<Runbook>
 
-    fun findByTagsContains(tag: String): Flux<Runbook>
-
     fun save(runbook: Runbook): Mono<Runbook>
 
     fun deleteById(id: String): Mono<Void>

@@ -25,6 +25,4 @@ interface RunbookMongoRepository : ReactiveMongoRepository<Runbook, String> {
     fun findByServiceId(serviceId: String): Flux<Runbook>
 
     fun findByAlertName(alertName: String): Flux<Runbook>
-
-    fun findByTagsContains(tag: String): Flux<Runbook>
 }

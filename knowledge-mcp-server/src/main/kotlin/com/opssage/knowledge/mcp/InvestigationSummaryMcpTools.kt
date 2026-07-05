@@ -15,6 +15,7 @@
  */
 package com.opssage.knowledge.mcp
 
+import com.opssage.knowledge.config.McpProperties
 import com.opssage.knowledge.model.Confidence
 import com.opssage.knowledge.model.InvestigationSummary
 import com.opssage.knowledge.model.InvestigationSummaryDraft
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component
 @Component
 class InvestigationSummaryMcpTools(
     private val investigationSummaryService: InvestigationSummaryService,
+    private val mcp: McpProperties,
 ) {
 
     @Tool(
@@ -59,5 +61,6 @@ class InvestigationSummaryMcpTools(
                     evidence = evidence,
                     recommendedActions = recommendedActions,
                 ),
-            ).blockingGet()!!
+            ).blockingGet(mcp.callTimeout)
+            ?: error("Investigation summary was not persisted")
 }

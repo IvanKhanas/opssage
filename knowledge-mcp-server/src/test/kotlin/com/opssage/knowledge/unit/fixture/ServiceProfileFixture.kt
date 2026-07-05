@@ -32,7 +32,8 @@ object ServiceProfileFixture {
         description: String = faker.lorem().sentence(),
         team: String = faker.team().name(),
         criticality: Criticality = Criticality.MEDIUM,
-        dependencies: List<String> = emptyList(),
+        upstreamServices: List<String> = emptyList(),
+        downstreamServices: List<String> = emptyList(),
     ) = ServiceProfile(
         id = id,
         serviceId = serviceId,
@@ -40,6 +41,7 @@ object ServiceProfileFixture {
         description = description,
         team = team,
         criticality = criticality,
-        dependencies = dependencies,
+        upstreamServices = upstreamServices,
+        downstreamServices = downstreamServices,
     )
 }

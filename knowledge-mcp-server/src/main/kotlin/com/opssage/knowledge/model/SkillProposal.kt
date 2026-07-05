@@ -18,12 +18,14 @@ package com.opssage.knowledge.model
 import java.time.Instant
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "skill_proposals")
 data class SkillProposal(
     @Id val id: String? = null,
+    @Version val version: Long? = null,
     val title: String,
     val problem: String,
     @Indexed val proposedToolName: String,

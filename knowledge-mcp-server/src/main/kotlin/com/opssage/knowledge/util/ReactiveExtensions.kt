@@ -20,16 +20,19 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 
+import java.time.Duration
+
 private val worker = Schedulers.boundedElastic()
 
 private fun <T : Any> Mono<T>.onWorker(): Mono<T> = subscribeOn(worker)
 
 @Suppress("ktlint:standard:function-expression-body")
-fun <T : Any> Flux<T>.blockingList(): List<T> {
-    return collectList().onWorker().block() ?: emptyList()
+fun <T : Any> Flux<T>.blockingList(timeout: Duration): List<T> {
+    return collectList().onWorker().block(timeout) ?: emptyList()
 }
 
-fun <T : Any> Mono<T>.blockingGet(): T? = onWorker().block()
+fun <T : Any> Mono<T>.blockingGet(timeout: Duration): T? =
+    onWorker().block(timeout)
 
 fun <T : Any> Flux<T>.paged(
     page: Int,

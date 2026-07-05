@@ -19,6 +19,7 @@ import com.opssage.knowledge.dto.ApiErrorResponse
 import org.slf4j.LoggerFactory
 
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -62,6 +63,14 @@ class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             "RESOURCE_ALREADY_EXISTS",
             "A resource with the same unique value already exists",
+        )
+
+    @ExceptionHandler(OptimisticLockingFailureException::class)
+    fun handleConcurrentModification(): ErrorResponse =
+        response(
+            HttpStatus.CONFLICT,
+            "CONCURRENT_MODIFICATION",
+            "The resource was modified concurrently, please retry",
         )
 
     @ExceptionHandler(InvalidFactStateException::class)

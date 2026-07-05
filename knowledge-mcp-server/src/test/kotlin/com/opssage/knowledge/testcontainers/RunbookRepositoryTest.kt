@@ -20,8 +20,6 @@ import com.opssage.knowledge.unit.fixture.RunbookFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -111,27 +109,5 @@ class RunbookRepositoryTest {
                 .block()!!
 
         assertThat(result).isEmpty()
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["latency", "mongodb", "redis"])
-    fun `findByTagsContains returns runbooks with the given tag`(tag: String) {
-        repository
-            .saveAll(
-                listOf(
-                    RunbookFixture.runbook(
-                        id = null,
-                        tags = listOf("latency", "mongodb"),
-                    ),
-                    RunbookFixture.runbook(id = null, tags = listOf("redis")),
-                    RunbookFixture.runbook(id = null, tags = listOf("disk")),
-                ),
-            ).collectList()
-            .block()
-
-        val result = repository.findByTagsContains(tag).collectList().block()!!
-
-        assertThat(result).isNotEmpty
-        assertThat(result.all { it.tags.contains(tag) }).isTrue()
     }
 }
