@@ -66,6 +66,7 @@ class KnownIncidentService(
             repo.save(
                 incident.copy(
                     id = stored.id,
+                    version = stored.version,
                     createdAt = stored.createdAt,
                     updatedAt = Instant.now(),
                 ),

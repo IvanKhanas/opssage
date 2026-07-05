@@ -63,6 +63,7 @@ class ServiceProfileService(
             repo.save(
                 profile.copy(
                     id = stored.id,
+                    version = stored.version,
                     updatedAt = Instant.now(),
                 ),
             )

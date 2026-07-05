@@ -60,6 +60,7 @@ class RunbookService(
             repo.save(
                 runbook.copy(
                     id = stored.id,
+                    version = stored.version,
                     createdAt = stored.createdAt,
                     updatedAt = Instant.now(),
                 ),
