@@ -54,7 +54,12 @@ data class QueryProperties(
     @field:Min(1)
     @field:Max(100)
     val alertLogErrors: Int,
+    val minRateWindow: Duration,
 ) {
+    @AssertTrue
+    fun hasPositiveMinRateWindow(): Boolean =
+        !minRateWindow.isZero && !minRateWindow.isNegative
+
     @AssertTrue
     fun hasPositiveDefaultLookback(): Boolean =
         !defaultLookback.isZero && !defaultLookback.isNegative

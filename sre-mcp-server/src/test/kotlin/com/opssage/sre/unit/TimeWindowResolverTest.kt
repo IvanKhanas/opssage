@@ -43,6 +43,7 @@ class TimeWindowResolverTest {
             maxEvents = 50,
             maxDependencies = 20,
             alertLogErrors = 5,
+            minRateWindow = Duration.ofSeconds(60),
         )
     private val resolver = TimeWindowResolver(query, clock)
 

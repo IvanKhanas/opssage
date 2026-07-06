@@ -83,7 +83,13 @@ class DependencyImpactQuery(
         namespace: String,
         window: TimeWindow,
     ): MetricScope =
-        MetricScope.forWindow(service, namespace, window, query.maxPoints)
+        MetricScope.forWindow(
+            service,
+            namespace,
+            window,
+            query.maxPoints,
+            query.minRateWindow.seconds,
+        )
 
     private fun depMetric(
         scope: MetricScope,
@@ -93,12 +99,12 @@ class DependencyImpactQuery(
             readings.reading(
                 window,
                 templates.errorRate(scope),
-                scope.rateWindowSeconds,
+                scope.stepSeconds,
             ),
             readings.reading(
                 window,
                 templates.latencyQuantile(scope, PromQlTemplates.P99),
-                scope.rateWindowSeconds,
+                scope.stepSeconds,
             ),
         ) { err, p99 ->
             DependencyReading(

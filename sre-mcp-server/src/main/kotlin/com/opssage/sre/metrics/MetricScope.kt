@@ -20,6 +20,7 @@ import com.opssage.sre.time.TimeWindow
 data class MetricScope(
     val service: String,
     val namespace: String,
+    val stepSeconds: Long,
     val rateWindowSeconds: Long,
 ) {
     companion object {
@@ -28,7 +29,15 @@ data class MetricScope(
             namespace: String,
             window: TimeWindow,
             maxPoints: Int,
-        ): MetricScope =
-            MetricScope(service, namespace, window.stepSeconds(maxPoints))
+            minRateWindowSeconds: Long,
+        ): MetricScope {
+            val step = window.stepSeconds(maxPoints)
+            return MetricScope(
+                service,
+                namespace,
+                step,
+                maxOf(step, minRateWindowSeconds),
+            )
+        }
     }
 }

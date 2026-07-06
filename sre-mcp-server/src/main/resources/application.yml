@@ -18,6 +18,7 @@ sre:
     max-window: ${SRE_QUERY_MAX_WINDOW:48h}
     forward-buffer: ${SRE_QUERY_FORWARD_BUFFER:10m}
     max-points: ${SRE_QUERY_MAX_POINTS:120}
+    min-rate-window: ${SRE_QUERY_MIN_RATE_WINDOW:60s}
     max-new-errors: ${SRE_QUERY_MAX_NEW_ERRORS:20}
     max-traces: ${SRE_QUERY_MAX_TRACES:20}
     max-spans: ${SRE_QUERY_MAX_SPANS:200}

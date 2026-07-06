@@ -42,11 +42,17 @@ class ServiceHealthQuery(
         window: TimeWindow,
     ): Mono<ServiceHealthResult> {
         val scope =
-            MetricScope.forWindow(service, namespace, window, query.maxPoints)
+            MetricScope.forWindow(
+                service,
+                namespace,
+                window,
+                query.maxPoints,
+                query.minRateWindow.seconds,
+            )
         val monos =
             queries(scope).map { (name, promql) ->
                 client
-                    .queryRange(promql, window, scope.rateWindowSeconds)
+                    .queryRange(promql, window, scope.stepSeconds)
                     .map { series -> summarizer.summarizeFirst(name, series) }
             }
         return monos.zipAll().map { signals ->

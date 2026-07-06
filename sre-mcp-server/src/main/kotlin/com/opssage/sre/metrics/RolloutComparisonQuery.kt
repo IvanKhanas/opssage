@@ -84,8 +84,9 @@ class RolloutComparisonQuery(
                 request.namespace,
                 window,
                 query.maxPoints,
+                query.minRateWindow.seconds,
             )
-        val step = scope.rateWindowSeconds
+        val step = scope.stepSeconds
         return Mono
             .zip(
                 readings.reading(window, templates.errorRate(scope), step),

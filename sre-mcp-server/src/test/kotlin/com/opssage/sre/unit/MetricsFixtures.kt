@@ -55,6 +55,7 @@ object MetricsFixtures {
             maxEvents = 50,
             maxDependencies = 20,
             alertLogErrors = 5,
+            minRateWindow = Duration.ofSeconds(60),
         )
 
     fun risingSeries(): MetricSeries =
