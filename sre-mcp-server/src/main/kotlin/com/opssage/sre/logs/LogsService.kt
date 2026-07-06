@@ -1,0 +1,68 @@
+/*
+ * Copyright 2026 Ivan Khanas
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.opssage.sre.logs
+
+import com.opssage.sre.client.VictoriaLogsClient
+import com.opssage.sre.config.LogsProperties
+import com.opssage.sre.dto.TimeWindowView
+import com.opssage.sre.dto.TopError
+import com.opssage.sre.dto.TopLogErrorsResult
+import com.opssage.sre.time.TimeWindow
+import com.opssage.sre.util.ConfidenceCalculator
+import reactor.core.publisher.Mono
+
+import org.springframework.stereotype.Component
+
+@Component
+class LogsService(
+    private val client: VictoriaLogsClient,
+    private val aggregator: LogErrorAggregator,
+    private val logs: LogsProperties,
+) {
+
+    fun topLogErrors(
+        request: LogQuery,
+        window: TimeWindow,
+    ): Mono<TopLogErrorsResult> =
+        client
+            .errorLogs(request.service, request.namespace, window)
+            .map { records ->
+                val top = aggregator.aggregate(records, request.limit)
+                TopLogErrorsResult(
+                    service = request.service,
+                    namespace = request.namespace,
+                    window = view(window),
+                    topErrors = top,
+                    summary = summaryLine(request.service, top, records.size),
+                    confidence =
+                        ConfidenceCalculator.ofSamples(
+                            records.size,
+                            logs.maxSamples,
+                        ),
+                )
+            }
+
+    private fun summaryLine(
+        service: String,
+        top: List<TopError>,
+        total: Int,
+    ): String =
+        "Top log errors for $service: $total error lines grouped into " +
+            "${top.size} fingerprints."
+
+    private fun view(window: TimeWindow): TimeWindowView =
+        TimeWindowView(window.from.toString(), window.to.toString())
+}
