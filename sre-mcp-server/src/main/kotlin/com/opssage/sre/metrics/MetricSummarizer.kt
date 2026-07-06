@@ -63,10 +63,10 @@ class MetricSummarizer {
             latest.timestamp.epochSecond - first.timestamp.epochSecond
 
         return MetricStats(
-            first = first.value,
-            latest = latest.value,
-            min = values.min(),
-            max = values.max(),
+            first = round(first.value),
+            latest = round(latest.value),
+            min = round(values.min()),
+            max = round(values.max()),
             mean = round(values.average()),
             p95 = round(percentile(values.sorted(), P95_RANK)),
             trend = trend(first.value, latest.value),
