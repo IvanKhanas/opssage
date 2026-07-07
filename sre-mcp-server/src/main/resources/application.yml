@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: sre-mcp-server
+  ai:
+    mcp:
+      server:
+        name: sre-mcp-server
+        version: 1.0.0
+
+sre:
+  mcp:
+    call-timeout: ${MCP_CALL_TIMEOUT:30s}
+  http:
+    connect-timeout: ${SRE_HTTP_CONNECT_TIMEOUT:2s}
+    response-timeout: ${SRE_HTTP_RESPONSE_TIMEOUT:10s}
+  query:
+    default-lookback: ${SRE_QUERY_DEFAULT_LOOKBACK:2h}
+    max-window: ${SRE_QUERY_MAX_WINDOW:48h}
+    forward-buffer: ${SRE_QUERY_FORWARD_BUFFER:10m}
+    max-points: ${SRE_QUERY_MAX_POINTS:120}
+    min-rate-window: ${SRE_QUERY_MIN_RATE_WINDOW:60s}
+    max-new-errors: ${SRE_QUERY_MAX_NEW_ERRORS:20}
+    max-traces: ${SRE_QUERY_MAX_TRACES:20}
+    max-spans: ${SRE_QUERY_MAX_SPANS:200}
+    max-pods: ${SRE_QUERY_MAX_PODS:50}
+    max-events: ${SRE_QUERY_MAX_EVENTS:50}
+    max-dependencies: ${SRE_QUERY_MAX_DEPENDENCIES:20}
+    alert-log-errors: ${SRE_QUERY_ALERT_LOG_ERRORS:5}
+  victoria-metrics:
+    base-url: ${VICTORIA_METRICS_URL:http://localhost:8428}
+    request-metric: ${VM_REQUEST_METRIC:http_server_requests_seconds_count}
+    request-bucket-metric: >-
+      ${VM_REQUEST_BUCKET_METRIC:http_server_requests_seconds_bucket}
+    service-label: ${VM_SERVICE_LABEL:service}
+    namespace-label: ${VM_NAMESPACE_LABEL:namespace}
+    error-label: ${VM_ERROR_LABEL:outcome}
+    error-outcome: ${VM_ERROR_OUTCOME:SERVER_ERROR}
+  correctness:
+    metric: ${CORRECTNESS_METRIC:service_correctness_checks_total}
+    invariant-label: ${CORRECTNESS_INVARIANT_LABEL:invariant}
+    outcome:
+      label: ${CORRECTNESS_OUTCOME_LABEL:outcome}
+      failed-value: ${CORRECTNESS_FAILED_VALUE:FAIL}
+  victoria-logs:
+    base-url: ${VICTORIA_LOGS_URL:http://localhost:9428}
+    service-field: ${VL_SERVICE_FIELD:service}
+    namespace-field: ${VL_NAMESPACE_FIELD:namespace}
+    level-field: ${VL_LEVEL_FIELD:level}
+    error-level: ${VL_ERROR_LEVEL:ERROR}
+    message-field: ${VL_MESSAGE_FIELD:_msg}
+    trace-field: ${VL_TRACE_FIELD:trace_id}
+    time-field: ${VL_TIME_FIELD:_time}
+    max-samples: ${VL_MAX_SAMPLES:500}
+    max-scan-samples: ${VL_MAX_SCAN_SAMPLES:5000}
+  victoria-traces:
+    base-url: ${VICTORIA_TRACES_URL:http://localhost:10428}
+    jaeger-api-path: ${VICTORIA_TRACES_JAEGER_PATH:/select/jaeger/api}
+    user-tag: ${VICTORIA_TRACES_USER_TAG:userId}
+    namespace-tag: ${VICTORIA_TRACES_NAMESPACE_TAG:namespace}
+    error-tag: ${VICTORIA_TRACES_ERROR_TAG:error}
+  kubernetes:
+    base-url: ${KUBERNETES_API_URL:https://kubernetes.default.svc}
+    token: ${KUBERNETES_API_TOKEN:}
+    app-label: ${KUBERNETES_APP_LABEL:app}
+    ca-cert-path: ${KUBERNETES_CA_CERT_PATH:}
+
+server:
+  port: ${SERVER_PORT:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true

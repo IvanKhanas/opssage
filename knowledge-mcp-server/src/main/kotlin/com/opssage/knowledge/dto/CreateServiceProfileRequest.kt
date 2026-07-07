@@ -71,6 +71,12 @@ data class CreateServiceProfileRequest(
         String,
     > = emptyList(),
     @field:Size(max = 50)
+    val correctnessInvariants: List<
+        @NotBlank
+        @Size(max = 256)
+        String,
+    > = emptyList(),
+    @field:Size(max = 50)
     val contacts: List<
         @NotBlank
         @Size(max = 256)
@@ -91,6 +97,7 @@ data class CreateServiceProfileRequest(
             importantEndpoints = importantEndpoints,
             commonFailureModes = commonFailureModes,
             metricHints = metricHints,
+            correctnessInvariants = correctnessInvariants,
             contacts = contacts,
         )
 }

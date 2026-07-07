@@ -108,10 +108,10 @@ class AtlasVectorIndexInitializer(
     @Suppress("UNCHECKED_CAST")
     private fun matchesDesired(existing: Document): Boolean {
         val definition =
-            existing.get(LATEST_DEFINITION, Document::class.java)
+            existing[LATEST_DEFINITION] as? Document
                 ?: return false
         val fields =
-            definition.get(FIELDS, List::class.java) as? List<Document>
+            definition[FIELDS] as? List<Document>
                 ?: return false
         val vector = fields.firstOrNull { it.getString(TYPE) == TYPE_VECTOR }
         val vectorOk =
