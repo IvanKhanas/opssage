@@ -16,6 +16,7 @@
 package com.opssage.sre.mcp
 
 import com.opssage.sre.config.McpProperties
+import com.opssage.sre.dto.ServiceTracesResult
 import com.opssage.sre.dto.TraceDetailResult
 import com.opssage.sre.dto.UserTracesResult
 import com.opssage.sre.time.TimeWindowResolver
@@ -36,11 +37,36 @@ class TracesMcpTools(
 
     @Tool(
         description =
+            "Find recent distributed traces for a service without requiring " +
+                "a user id. Returns bounded summaries with duration, " +
+                "service/span counts and error-span counts. 'limit' is the " +
+                "max number of traces and is optional: omit it to use the " +
+                "server default, it is capped server-side. Use it after " +
+                "health or dependency signals show latency or errors, then " +
+                "inspect a suspicious trace with summarizeTrace.",
+    )
+    fun findServiceTraces(
+        service: String,
+        namespace: String,
+        lookback: String?,
+        limit: Int?,
+    ): ServiceTracesResult {
+        Identifiers.require("service", service)
+        Identifiers.require("namespace", namespace)
+        val window = resolver.fromLookback(lookback)
+        return tracesService
+            .serviceTraces(service, namespace, window, limit)
+            .blockingGet(mcp.callTimeout, "finding traces for $service")
+    }
+
+    @Tool(
+        description =
             "Find distributed traces tied to a specific end user for a " +
                 "service over a recent window, to see which requests that " +
                 "user made and which failed. Provide 'userId' as the user " +
                 "identifier, 'lookback' as an ISO-8601 duration such as PT1H " +
-                "and 'limit' as the max number of traces. Each trace is " +
+                "and 'limit' as the optional max number of traces, capped " +
+                "server-side. Each trace is " +
                 "summarised with root operation, duration, span/service " +
                 "counts and error-span count; the caller picks which to " +
                 "inspect with summarizeTrace.",
@@ -50,7 +76,7 @@ class TracesMcpTools(
         namespace: String,
         userId: String,
         lookback: String?,
-        limit: Int,
+        limit: Int?,
     ): UserTracesResult {
         Identifiers.require("service", service)
         Identifiers.require("namespace", namespace)

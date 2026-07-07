@@ -82,6 +82,46 @@ class TracesServiceTest {
     }
 
     @Test
+    fun `summarises service traces without a user id`() {
+        every {
+            client.findServiceTraces(any(), any(), any(), any())
+        } returns Mono.just(listOf(sampleTrace()))
+
+        val result =
+            service
+                .serviceTraces(
+                    "deposit-service",
+                    "banking",
+                    MetricsFixtures.window(),
+                    10,
+                ).block()!!
+
+        assertThat(result.service).isEqualTo("deposit-service")
+        assertThat(result.traces).hasSize(1)
+        assertThat(result.traces[0].errorSpanCount).isEqualTo(1)
+        assertThat(result.confidence).isEqualTo(Confidence.HIGH)
+    }
+
+    @Test
+    fun `reports low confidence when no service traces are found`() {
+        every {
+            client.findServiceTraces(any(), any(), any(), any())
+        } returns Mono.just(emptyList())
+
+        val result =
+            service
+                .serviceTraces(
+                    "deposit-service",
+                    "banking",
+                    MetricsFixtures.window(),
+                    10,
+                ).block()!!
+
+        assertThat(result.traces).isEmpty()
+        assertThat(result.confidence).isEqualTo(Confidence.LOW)
+    }
+
+    @Test
     fun `builds an ordered span chain for a trace`() {
         every { client.getTrace("t1") } returns Mono.just(sampleTrace())
 

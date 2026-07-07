@@ -77,12 +77,37 @@ class VictoriaTracesClientTest {
         assertThat(spans.first { it.spanId == "s1" }.error).isFalse()
     }
 
+    @Test
+    fun `finds service traces without a user tag`() {
+        server.stubFor(
+            get(urlPathEqualTo("/select/jaeger/api/traces"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(TRACES_BODY),
+                ),
+        )
+        val window =
+            TimeWindow(
+                Instant.parse("2026-06-27T10:00:00Z"),
+                Instant.parse("2026-06-27T11:00:00Z"),
+            )
+
+        val traces =
+            client
+                .findServiceTraces("deposit-service", "banking", window, 20)
+                .block()!!
+
+        assertThat(traces).hasSize(1)
+        assertThat(traces[0].spans).hasSize(2)
+    }
+
     private companion object {
         private val server = WireMockServer(options().dynamicPort())
 
         val TRACES_BODY =
             """
-            {"data":[{"traceID":"t1","spans":[{"spanID":"s1","operationName":"GET /pay","references":[],"startTime":1000000,"duration":500000,"tags":[],"processID":"p1"},{"spanID":"s2","operationName":"charge","references":[{"refType":"CHILD_OF","spanID":"s1"}],"startTime":1100000,"duration":300000,"tags":[{"key":"error","value":true}],"processID":"p2"}],"processes":{"p1":{"serviceName":"gateway"},"p2":{"serviceName":"deposit-service"}}}]}
+            {"data":[{"traceID":"t1","spans":[{"spanID":"s1","operationName":"GET /pay","references":[],"startTime":1000000,"duration":500000,"tags":[{"key":"error","value":"unset"}],"processID":"p1"},{"spanID":"s2","operationName":"charge","references":[{"refType":"CHILD_OF","spanID":"s1"}],"startTime":1100000,"duration":300000,"tags":[{"key":"error","value":true}],"processID":"p2"}],"processes":{"p1":{"serviceName":"gateway"},"p2":{"serviceName":"deposit-service"}}}]}
             """.trimIndent()
 
         @JvmStatic

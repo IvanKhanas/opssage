@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.sre.traces
+package com.opssage.sre.dto
 
-data class TraceQuery(
+import com.opssage.sre.model.Confidence
+
+data class ServiceTracesResult(
     val service: String,
     val namespace: String,
-    val userId: String,
-    val limit: Int?,
+    val window: TimeWindowView,
+    val traces: List<TraceSummary>,
+    val summary: String,
+    val confidence: Confidence,
 )

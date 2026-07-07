@@ -17,6 +17,7 @@ package com.opssage.sre.traces
 
 import com.opssage.sre.client.VictoriaTracesClient
 import com.opssage.sre.config.QueryProperties
+import com.opssage.sre.dto.ServiceTracesResult
 import com.opssage.sre.dto.TimeWindowView
 import com.opssage.sre.dto.TraceDetailResult
 import com.opssage.sre.dto.UserTracesResult
@@ -33,11 +34,36 @@ class TracesService(
     private val query: QueryProperties,
 ) {
 
+    fun serviceTraces(
+        service: String,
+        namespace: String,
+        window: TimeWindow,
+        limit: Int?,
+    ): Mono<ServiceTracesResult> {
+        val boundedLimit = boundedTraceLimit(limit)
+        return client
+            .findServiceTraces(service, namespace, window, boundedLimit)
+            .map { traces ->
+                ServiceTracesResult(
+                    service = service,
+                    namespace = namespace,
+                    window = TimeWindowView.of(window),
+                    traces = traces.map(assembler::summarize),
+                    summary = "Found ${traces.size} traces for $service.",
+                    confidence =
+                        ConfidenceCalculator.ofSamples(
+                            traces.size,
+                            boundedLimit,
+                        ),
+                )
+            }
+    }
+
     fun userTraces(
         request: TraceQuery,
         window: TimeWindow,
     ): Mono<UserTracesResult> {
-        val limit = request.limit.coerceIn(1, query.maxTraces)
+        val limit = boundedTraceLimit(request.limit)
         return client
             .findTraces(
                 request.service,
@@ -63,6 +89,9 @@ class TracesService(
         client
             .getTrace(traceId)
             .map { trace -> assembler.detail(trace, query.maxSpans) }
+
+    private fun boundedTraceLimit(limit: Int?): Int =
+        (limit ?: query.maxTraces).coerceIn(1, query.maxTraces)
 
     private fun summaryLine(
         userId: String,

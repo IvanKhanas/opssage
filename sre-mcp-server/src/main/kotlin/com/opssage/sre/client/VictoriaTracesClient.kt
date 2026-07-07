@@ -68,6 +68,13 @@ class VictoriaTracesClient(
                 }
             }
 
+    fun findServiceTraces(
+        service: String,
+        namespace: String,
+        window: TimeWindow,
+        limit: Int,
+    ): Mono<List<Trace>> = findTraces(service, namespace, "", window, limit)
+
     fun getTrace(traceId: String): Mono<Trace> =
         victoriaTracesWebClient
             .get()
@@ -94,7 +101,10 @@ class VictoriaTracesClient(
         userId: String,
     ): String =
         mapper.writeValueAsString(
-            mapOf(traces.namespaceTag to namespace, traces.userTag to userId),
+            buildMap {
+                put(traces.namespaceTag, namespace)
+                if (userId.isNotBlank()) put(traces.userTag, userId)
+            },
         )
 
     private fun micros(instant: Instant): Long =
@@ -128,13 +138,12 @@ class VictoriaTracesClient(
 
     private fun truthy(value: Any?): Boolean {
         val text = value?.toString()?.trim().orEmpty()
-        return text.isNotEmpty() &&
-            !text.equals("false", ignoreCase = true) &&
-            text != "0"
+        return text.isNotEmpty() && text.lowercase() !in NON_ERROR_VALUES
     }
 
     private companion object {
         const val CHILD_OF = "CHILD_OF"
         const val MICROS_PER_MILLI = 1000L
+        val NON_ERROR_VALUES = setOf("false", "0", "unset", "ok")
     }
 }
