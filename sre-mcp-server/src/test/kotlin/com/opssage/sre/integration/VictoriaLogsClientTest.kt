@@ -72,6 +72,24 @@ class VictoriaLogsClientTest {
         assertThat(records[1].traceId).isEqualTo("abc-456")
     }
 
+    @Test
+    fun `returns empty list when query body is empty`() {
+        server.stubFor(
+            get(urlPathEqualTo("/select/logsql/query"))
+                .willReturn(aResponse().withStatus(200)),
+        )
+        val window =
+            TimeWindow(
+                Instant.parse("2026-06-27T10:00:00Z"),
+                Instant.parse("2026-06-27T11:00:00Z"),
+            )
+
+        val records =
+            client.errorLogs("deposit-service", "banking", window).block()!!
+
+        assertThat(records).isEmpty()
+    }
+
     private companion object {
         private val server = WireMockServer(options().dynamicPort())
 

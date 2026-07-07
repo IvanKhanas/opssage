@@ -15,6 +15,7 @@
  */
 package com.opssage.sre.config
 
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 
@@ -35,4 +36,10 @@ data class LogsProperties(
     @field:Min(1)
     @field:Max(10_000)
     val maxSamples: Int,
-)
+    @field:Min(1)
+    @field:Max(100_000)
+    val maxScanSamples: Int,
+) {
+    @AssertTrue
+    fun hasValidScanLimit(): Boolean = maxScanSamples >= maxSamples
+}

@@ -50,7 +50,7 @@ class LogsService(
                     confidence =
                         ConfidenceCalculator.ofSamples(
                             records.size,
-                            logs.maxSamples,
+                            logs.maxScanSamples,
                         ),
                 )
             }

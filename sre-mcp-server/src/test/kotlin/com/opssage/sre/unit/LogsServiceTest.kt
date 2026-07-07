@@ -51,6 +51,7 @@ class LogsServiceTest {
             traceField = "trace_id",
             timeField = "_time",
             maxSamples = 500,
+            maxScanSamples = 5_000,
         )
     private val window =
         TimeWindow(
@@ -92,7 +93,7 @@ class LogsServiceTest {
             LogsService(
                 client,
                 LogErrorAggregator(),
-                logs.copy(maxSamples = 2),
+                logs.copy(maxScanSamples = 2),
             )
         val records =
             listOf(

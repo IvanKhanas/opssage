@@ -19,6 +19,7 @@ import com.opssage.sre.config.LogsProperties
 import com.opssage.sre.model.LogRecord
 import com.opssage.sre.time.TimeWindow
 import io.github.oshai.kotlinlogging.KotlinLogging
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import tools.jackson.databind.ObjectMapper
 
@@ -39,20 +40,41 @@ class VictoriaLogsClient(
         namespace: String,
         window: TimeWindow,
     ): Mono<List<LogRecord>> =
+        Flux
+            .range(0, pageCount())
+            .concatMap { page ->
+                errorLogPage(
+                    service,
+                    namespace,
+                    window,
+                    page * logs.maxSamples,
+                )
+            }.takeUntil { it.size < logs.maxSamples }
+            .flatMapIterable { it }
+            .take(logs.maxScanSamples.toLong())
+            .collectList()
+
+    private fun errorLogPage(
+        service: String,
+        namespace: String,
+        window: TimeWindow,
+        offset: Int,
+    ): Mono<List<LogRecord>> =
         victoriaLogsWebClient
             .get()
             .uri { builder ->
                 builder
                     .path("/select/logsql/query")
                     .queryParam("query", "{query}")
-                    .queryParam("limit", logs.maxSamples)
                     .build(
                         mapOf(
-                            "query" to query(service, namespace, window),
+                            "query" to
+                                query(service, namespace, window, offset),
                         ),
                     )
             }.retrieve()
             .bodyToMono(String::class.java)
+            .defaultIfEmpty("")
             .map(::parse)
             .doOnError { error ->
                 log.atWarn {
@@ -67,13 +89,20 @@ class VictoriaLogsClient(
         service: String,
         namespace: String,
         window: TimeWindow,
+        offset: Int,
     ): String =
         "${logs.serviceField}:=${quote(service)} " +
             "${logs.namespaceField}:=${quote(namespace)} " +
             "${logs.levelField}:=${quote(logs.errorLevel)} " +
-            "${logs.timeField}:[${window.from}, ${window.to}]"
+            "${logs.timeField}:[${window.from}, ${window.to}] " +
+            "| sort by (${logs.timeField} desc) | offset $offset " +
+            "| limit ${logs.maxSamples}"
 
-    private fun quote(value: String): String = "\"$value\""
+    private fun pageCount(): Int =
+        (logs.maxScanSamples + logs.maxSamples - 1) / logs.maxSamples
+
+    private fun quote(value: String): String =
+        "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
     private fun parse(body: String): List<LogRecord> =
         body
