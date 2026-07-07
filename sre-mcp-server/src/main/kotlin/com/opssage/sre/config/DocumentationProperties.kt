@@ -15,26 +15,19 @@
  */
 package com.opssage.sre.config
 
-import java.time.Clock
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.validation.annotation.Validated
 
-@Configuration
-@EnableConfigurationProperties(
-    McpProperties::class,
-    HttpClientProperties::class,
-    QueryProperties::class,
-    MetricsProperties::class,
-    CorrectnessProperties::class,
-    LogsProperties::class,
-    TracesProperties::class,
-    KubernetesProperties::class,
-    DocumentationProperties::class,
+@Validated
+@ConfigurationProperties("sre.documentation")
+data class DocumentationProperties(
+    @field:Min(1)
+    @field:Max(50)
+    val maxLinks: Int,
+    @field:Min(256)
+    @field:Max(1_000_000)
+    val maxDocumentChars: Int,
 )
-class SreConfig {
-
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
-}
