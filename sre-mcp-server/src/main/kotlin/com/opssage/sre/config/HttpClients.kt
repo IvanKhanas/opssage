@@ -36,6 +36,10 @@ private data class WebClientSettings(
 @Configuration
 class HttpClients {
 
+    private companion object {
+        private const val MAX_UTF8_BYTES_PER_CHAR = 4
+    }
+
     @Bean
     fun victoriaMetricsWebClient(
         http: HttpClientProperties,
@@ -67,6 +71,24 @@ class HttpClients {
             ),
             http,
         )
+
+    @Bean
+    fun documentationWebClient(
+        http: HttpClientProperties,
+        documentation: DocumentationProperties,
+    ): WebClient =
+        WebClient
+            .builder()
+            .clientConnector(
+                ReactorClientHttpConnector(nettyClient(http, null)),
+            ).codecs { configurer ->
+                configurer
+                    .defaultCodecs()
+                    .maxInMemorySize(
+                        documentation.maxDocumentChars *
+                            MAX_UTF8_BYTES_PER_CHAR,
+                    )
+            }.build()
 
     private fun webClient(
         settings: WebClientSettings,

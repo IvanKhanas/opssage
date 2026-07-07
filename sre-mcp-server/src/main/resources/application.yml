@@ -63,6 +63,9 @@ sre:
     token: ${KUBERNETES_API_TOKEN:}
     app-label: ${KUBERNETES_APP_LABEL:app}
     ca-cert-path: ${KUBERNETES_CA_CERT_PATH:}
+  documentation:
+    max-links: ${SRE_DOC_MAX_LINKS:10}
+    max-document-chars: ${SRE_DOC_MAX_DOCUMENT_CHARS:20000}
 
 server:
   port: ${SERVER_PORT:8083}
