@@ -35,6 +35,12 @@ sre:
     namespace-label: ${VM_NAMESPACE_LABEL:namespace}
     error-label: ${VM_ERROR_LABEL:outcome}
     error-outcome: ${VM_ERROR_OUTCOME:SERVER_ERROR}
+  correctness:
+    metric: ${CORRECTNESS_METRIC:service_correctness_checks_total}
+    invariant-label: ${CORRECTNESS_INVARIANT_LABEL:invariant}
+    outcome:
+      label: ${CORRECTNESS_OUTCOME_LABEL:outcome}
+      failed-value: ${CORRECTNESS_FAILED_VALUE:FAIL}
   victoria-logs:
     base-url: ${VICTORIA_LOGS_URL:http://localhost:9428}
     service-field: ${VL_SERVICE_FIELD:service}
@@ -45,6 +51,7 @@ sre:
     trace-field: ${VL_TRACE_FIELD:trace_id}
     time-field: ${VL_TIME_FIELD:_time}
     max-samples: ${VL_MAX_SAMPLES:500}
+    max-scan-samples: ${VL_MAX_SCAN_SAMPLES:5000}
   victoria-traces:
     base-url: ${VICTORIA_TRACES_URL:http://localhost:10428}
     jaeger-api-path: ${VICTORIA_TRACES_JAEGER_PATH:/select/jaeger/api}

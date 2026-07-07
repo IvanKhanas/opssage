@@ -15,25 +15,16 @@
  */
 package com.opssage.sre.config
 
-import java.time.Clock
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-@EnableConfigurationProperties(
-    McpProperties::class,
-    HttpClientProperties::class,
-    QueryProperties::class,
-    MetricsProperties::class,
-    CorrectnessProperties::class,
-    LogsProperties::class,
-    TracesProperties::class,
-    KubernetesProperties::class,
+data class CorrectnessOutcomeProperties(
+    val label: String,
+    val failedValue: String,
 )
-class SreConfig {
 
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
-}
+@ConfigurationProperties("sre.correctness")
+data class CorrectnessProperties(
+    val metric: String,
+    val invariantLabel: String,
+    val outcome: CorrectnessOutcomeProperties,
+)

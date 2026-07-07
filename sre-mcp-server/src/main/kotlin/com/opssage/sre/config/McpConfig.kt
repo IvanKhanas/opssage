@@ -16,6 +16,7 @@
 package com.opssage.sre.config
 
 import com.opssage.sre.mcp.AlertContextMcpTools
+import com.opssage.sre.mcp.CorrectnessMcpTools
 import com.opssage.sre.mcp.KubernetesMcpTools
 import com.opssage.sre.mcp.LogsMcpTools
 import com.opssage.sre.mcp.MetricsMcpTools
@@ -36,6 +37,7 @@ class McpConfig {
         tracesMcpTools: TracesMcpTools,
         kubernetesMcpTools: KubernetesMcpTools,
         alertContextMcpTools: AlertContextMcpTools,
+        correctnessMcpTools: CorrectnessMcpTools,
     ): ToolCallbackProvider =
         MethodToolCallbackProvider
             .builder()
@@ -45,5 +47,6 @@ class McpConfig {
                 tracesMcpTools,
                 kubernetesMcpTools,
                 alertContextMcpTools,
+                correctnessMcpTools,
             ).build()
 }
