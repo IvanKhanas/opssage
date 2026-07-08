@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: agent-service
+  mongodb:
+    uri: ${AGENT_MONGODB_URI:mongodb://localhost:27017/opssage-agent}
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
+    mcp:
+      client:
+        request-timeout: ${MCP_REQUEST_TIMEOUT:30s}
+        sse:
+          connections:
+            sre:
+              url: ${SRE_MCP_URL:http://localhost:8083}
+
+agent:
+  memory:
+    max-messages: ${AGENT_MEMORY_MAX_MESSAGES:20}
+  masking:
+    enabled: ${AGENT_MASKING_ENABLED:true}
+    email-token: ${AGENT_MASKING_EMAIL_TOKEN:[EMAIL]}
+    ip-token: ${AGENT_MASKING_IP_TOKEN:[IP]}
+    phone-token: ${AGENT_MASKING_PHONE_TOKEN:[PHONE]}
+    secret-token: ${AGENT_MASKING_SECRET_TOKEN:[REDACTED]}
+    uuid-token: ${AGENT_MASKING_UUID_TOKEN:[ID]}
+    label-token: ${AGENT_MASKING_LABEL_TOKEN:[PII]}
+    name-token: ${AGENT_MASKING_NAME_TOKEN:[NAME]}
+    mask-full-names: ${AGENT_MASKING_FULL_NAMES:true}
+    sensitive-labels: ${AGENT_MASKING_SENSITIVE_LABELS:userId,user_id,userName,username,login,name,firstName,first_name,lastName,last_name,surname,middleName,patronymic,fullName,customer,customerName,client,clientName,passport,snils,inn,card,cardNumber,pan,secret,token,password,имя,фамилия,отчество,фио}
+    ner:
+      enabled: ${AGENT_MASKING_NER_ENABLED:false}
+      model-path: ${AGENT_MASKING_NER_MODEL_PATH:}
+      score-threshold: ${AGENT_MASKING_NER_SCORE_THRESHOLD:0.5}
+      entity-tokens:
+        PER: "[NAME]"
+        LOC: "[LOCATION]"
+  confidence:
+    medium-evidence-threshold: ${AGENT_CONFIDENCE_MEDIUM_THRESHOLD:1}
+    high-evidence-threshold: ${AGENT_CONFIDENCE_HIGH_THRESHOLD:3}
+  window:
+    default-lookback: ${AGENT_WINDOW_DEFAULT_LOOKBACK:2h}
+    max-lookback: ${AGENT_WINDOW_MAX_LOOKBACK:48h}
+    forward-buffer: ${AGENT_WINDOW_FORWARD_BUFFER:5m}
+  llm:
+    fallback-summary-max-chars: ${AGENT_LLM_FALLBACK_SUMMARY_MAX_CHARS:4000}
+
+server:
+  port: ${SERVER_PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true

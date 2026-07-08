@@ -8,6 +8,9 @@ kotlin-logging = "7.0.3"
 spring-boot = "4.0.3"
 spring-ai = "2.0.0"
 
+# ML / ONNX NER (PII masking)
+djl = "0.32.0"
+
 
 # Testing
 mockk = "1.14.2"
@@ -53,6 +56,11 @@ jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module
 # ── Observability ────────────────────────────────────────────────────────────
 micrometer-registry-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus" }
 
+# ── ML / ONNX NER (PII masking) ──────────────────────────────────────────────
+djl-api = { group = "ai.djl", name = "api", version.ref = "djl" }
+djl-tokenizers = { group = "ai.djl.huggingface", name = "tokenizers", version.ref = "djl" }
+djl-onnxruntime = { group = "ai.djl.onnxruntime", name = "onnxruntime-engine", version.ref = "djl" }
+
 # ── Testing ──────────────────────────────────────────────────────────────────
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 springmockk = { group = "com.ninja-squad", name = "springmockk", version.ref = "springmockk" }
@@ -74,6 +82,7 @@ ktlint-cli-ruleset-core = { group = "com.pinterest.ktlint", name = "ktlint-cli-r
 spring-boot-base = ["spring-boot-starter-web", "kotlin-reflect", "kotlin-logging"]
 spring-boot-test = ["spring-boot-starter-test", "kotlin-test-junit5", "mockk", "springmockk"]
 observability = ["spring-boot-starter-actuator", "micrometer-registry-prometheus"]
+djl-onnx-ner = ["djl-api", "djl-tokenizers", "djl-onnxruntime"]
 
 [plugins]
 # Spring

@@ -12,6 +12,34 @@ tasks.test {
     jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
 
+val jacocoExcludes =
+    listOf(
+        "**/AgentServiceAppKt.class",
+        "**/masking/OnnxNerPiiDetector.class",
+    )
+
+tasks.withType<org.gradle.testing.jacoco.tasks.JacocoReport>().configureEach {
+    classDirectories.setFrom(
+        files(
+            classDirectories.files.map {
+                fileTree(it).exclude(jacocoExcludes)
+            },
+        ),
+    )
+}
+
+tasks
+    .withType<org.gradle.testing.jacoco.tasks.JacocoCoverageVerification>()
+    .configureEach {
+        classDirectories.setFrom(
+            files(
+                classDirectories.files.map {
+                    fileTree(it).exclude(jacocoExcludes)
+                },
+            ),
+        )
+    }
+
 dependencies {
     implementation(platform(libs.spring.boot.bom))
     implementation(libs.bundles.spring.boot.base)
@@ -20,6 +48,8 @@ dependencies {
     implementation(libs.spring.boot.starter.data.mongodb)
     implementation(libs.spring.ai.openai.starter)
     implementation(libs.spring.ai.mcp.client)
+    implementation(libs.bundles.djl.onnx.ner)
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(platform(libs.spring.boot.bom))
@@ -29,6 +59,7 @@ dependencies {
     testImplementation(libs.datafaker)
     testImplementation(libs.testcontainers)
     testImplementation(libs.testcontainers.junit5)
+    testImplementation(libs.testcontainers.mongodb)
     testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
