@@ -19,6 +19,7 @@ import com.opssage.sre.client.VictoriaLogsClient
 import com.opssage.sre.config.LogsProperties
 import com.opssage.sre.logs.LogErrorAggregator
 import com.opssage.sre.logs.LogQuery
+import com.opssage.sre.logs.LogSearch
 import com.opssage.sre.logs.LogsService
 import com.opssage.sre.model.Confidence
 import com.opssage.sre.model.LogRecord
@@ -72,7 +73,7 @@ class LogsServiceTest {
                 LogRecord("Timeout after 10ms", "t1", "2026-06-27T10:01:00Z"),
                 LogRecord("Timeout after 20ms", "t2", "2026-06-27T10:02:00Z"),
             )
-        every { client.errorLogs(any(), any(), any()) } returns
+        every { client.errorLogs(any<LogSearch>()) } returns
             Mono.just(records)
 
         val result =
@@ -88,6 +89,37 @@ class LogsServiceTest {
     }
 
     @Test
+    fun `filters matching error logs by literal text`() {
+        val records =
+            listOf(
+                LogRecord(
+                    "Deposit failed for user 123",
+                    "trace-user-123",
+                    "2026-06-27T10:01:00Z",
+                ),
+                LogRecord(
+                    "Deposit failed for user 456",
+                    "trace-user-456",
+                    "2026-06-27T10:02:00Z",
+                ),
+            )
+        every { client.errorLogs(any<LogSearch>()) } returns
+            Mono.just(records)
+
+        val result =
+            service
+                .matchingLogErrors(
+                    LogQuery("deposit-service", "banking", 10),
+                    "123",
+                    window,
+                ).block()!!
+
+        assertThat(result.topErrors).hasSize(1)
+        assertThat(result.topErrors[0].sampleMessage).contains("123")
+        assertThat(result.summary).contains("1 matching error lines")
+    }
+
+    @Test
     fun `reports medium confidence when the sample limit is reached`() {
         val truncated =
             LogsService(
@@ -100,7 +132,7 @@ class LogsServiceTest {
                 LogRecord("Timeout after 10ms", "t1", "2026-06-27T10:01:00Z"),
                 LogRecord("Connection reset", "t2", "2026-06-27T10:02:00Z"),
             )
-        every { client.errorLogs(any(), any(), any()) } returns
+        every { client.errorLogs(any<LogSearch>()) } returns
             Mono.just(records)
 
         val result =
@@ -115,7 +147,7 @@ class LogsServiceTest {
 
     @Test
     fun `reports low confidence when no error logs are found`() {
-        every { client.errorLogs(any(), any(), any()) } returns
+        every { client.errorLogs(any<LogSearch>()) } returns
             Mono.just(emptyList())
 
         val result =

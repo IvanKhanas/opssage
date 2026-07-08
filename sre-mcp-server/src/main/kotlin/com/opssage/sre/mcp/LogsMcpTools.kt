@@ -22,6 +22,7 @@ import com.opssage.sre.logs.LogQuery
 import com.opssage.sre.logs.LogsService
 import com.opssage.sre.time.TimeWindowResolver
 import com.opssage.sre.util.Identifiers
+import com.opssage.sre.util.LimitBounds
 import com.opssage.sre.util.blockingGet
 
 import org.springframework.ai.tool.annotation.Tool
@@ -40,22 +41,67 @@ class LogsMcpTools(
             "Find and group the top error-level log entries for a service " +
                 "over a recent window. Errors are grouped into fingerprints " +
                 "with a count, first/last seen time and sample trace ids. " +
-                "Provide 'lookback' as an ISO-8601 duration such as PT1H and " +
-                "'limit' as the number of fingerprints to return.",
+                "Provide 'lookback' as an ISO-8601 duration such as PT1H. " +
+                "'limit' is the optional max number of fingerprints to " +
+                "return: omit it to use the server default, capped " +
+                "server-side.",
     )
     fun findTopLogErrors(
         service: String,
         namespace: String,
         lookback: String?,
-        limit: Int,
+        limit: Int?,
     ): TopLogErrorsResult {
         Identifiers.require("service", service)
         Identifiers.require("namespace", namespace)
         val window = resolver.fromLookback(lookback)
         val request =
-            LogQuery(service, namespace, limit.coerceIn(1, logs.maxSamples))
+            LogQuery(
+                service,
+                namespace,
+                LimitBounds.bound(limit, logs.maxSamples),
+            )
         return logsService
             .topLogErrors(request, window)
             .blockingGet(mcp.callTimeout, "finding log errors for $service")
+    }
+
+    @Tool(
+        description =
+            "Find error-level log entries for a service that contain a " +
+                "specific literal text in the log message or trace id. Use " +
+                "this for user complaints or incident hints such as an id, " +
+                "email, request id, trace id, order id, or exact error " +
+                "token. " +
+                "The search is bounded by service, namespace, lookback and " +
+                "server-side scan limits; it does not accept arbitrary " +
+                "LogsQL. 'limit' is the optional max number of fingerprints, " +
+                "capped server-side. Confidence reflects how completely the " +
+                "bounded error window was scanned, not how strongly the text " +
+                "matched.",
+    )
+    fun findLogErrorsByText(
+        service: String,
+        namespace: String,
+        query: String,
+        lookback: String?,
+        limit: Int?,
+    ): TopLogErrorsResult {
+        Identifiers.require("service", service)
+        Identifiers.require("namespace", namespace)
+        Identifiers.requireValue("query", query)
+        val window = resolver.fromLookback(lookback)
+        val request =
+            LogQuery(
+                service,
+                namespace,
+                LimitBounds.bound(limit, logs.maxSamples),
+            )
+        return logsService
+            .matchingLogErrors(request, query, window)
+            .blockingGet(
+                mcp.callTimeout,
+                "finding log errors for $service containing query",
+            )
     }
 }

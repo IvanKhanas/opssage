@@ -16,6 +16,7 @@
 package com.opssage.sre.client
 
 import com.opssage.sre.config.LogsProperties
+import com.opssage.sre.logs.LogSearch
 import com.opssage.sre.model.LogRecord
 import com.opssage.sre.time.TimeWindow
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -39,25 +40,20 @@ class VictoriaLogsClient(
         service: String,
         namespace: String,
         window: TimeWindow,
-    ): Mono<List<LogRecord>> =
+    ): Mono<List<LogRecord>> = errorLogs(LogSearch(service, namespace, window))
+
+    fun errorLogs(search: LogSearch): Mono<List<LogRecord>> =
         Flux
             .range(0, pageCount())
             .concatMap { page ->
-                errorLogPage(
-                    service,
-                    namespace,
-                    window,
-                    page * logs.maxSamples,
-                )
+                errorLogPage(search, page * logs.maxSamples)
             }.takeUntil { it.size < logs.maxSamples }
             .flatMapIterable { it }
             .take(logs.maxScanSamples.toLong())
             .collectList()
 
     private fun errorLogPage(
-        service: String,
-        namespace: String,
-        window: TimeWindow,
+        search: LogSearch,
         offset: Int,
     ): Mono<List<LogRecord>> =
         victoriaLogsWebClient
@@ -68,8 +64,7 @@ class VictoriaLogsClient(
                     .queryParam("query", "{query}")
                     .build(
                         mapOf(
-                            "query" to
-                                query(service, namespace, window, offset),
+                            "query" to query(search, offset),
                         ),
                     )
             }.retrieve()
@@ -80,21 +75,22 @@ class VictoriaLogsClient(
                 log.atWarn {
                     message = "VictoriaLogs query failed"
                     payload =
-                        mapOf("service" to service, "namespace" to namespace)
+                        mapOf(
+                            "service" to search.service,
+                            "namespace" to search.namespace,
+                        )
                     cause = error
                 }
             }
 
     private fun query(
-        service: String,
-        namespace: String,
-        window: TimeWindow,
+        search: LogSearch,
         offset: Int,
     ): String =
-        "${logs.serviceField}:=${quote(service)} " +
-            "${logs.namespaceField}:=${quote(namespace)} " +
+        "${logs.serviceField}:=${quote(search.service)} " +
+            "${logs.namespaceField}:=${quote(search.namespace)} " +
             "${logs.levelField}:=${quote(logs.errorLevel)} " +
-            "${logs.timeField}:[${window.from}, ${window.to}] " +
+            "${logs.timeField}:[${search.window.from}, ${search.window.to}] " +
             "| sort by (${logs.timeField} desc) | offset $offset " +
             "| limit ${logs.maxSamples}"
 
