@@ -23,6 +23,7 @@ import com.opssage.sre.dto.TraceDetailResult
 import com.opssage.sre.dto.UserTracesResult
 import com.opssage.sre.time.TimeWindow
 import com.opssage.sre.util.ConfidenceCalculator
+import com.opssage.sre.util.LimitBounds
 import reactor.core.publisher.Mono
 
 import org.springframework.stereotype.Component
@@ -40,7 +41,7 @@ class TracesService(
         window: TimeWindow,
         limit: Int?,
     ): Mono<ServiceTracesResult> {
-        val boundedLimit = boundedTraceLimit(limit)
+        val boundedLimit = LimitBounds.bound(limit, query.maxTraces)
         return client
             .findServiceTraces(service, namespace, window, boundedLimit)
             .map { traces ->
@@ -63,7 +64,7 @@ class TracesService(
         request: TraceQuery,
         window: TimeWindow,
     ): Mono<UserTracesResult> {
-        val limit = boundedTraceLimit(request.limit)
+        val limit = LimitBounds.bound(request.limit, query.maxTraces)
         return client
             .findTraces(
                 request.service,
@@ -89,9 +90,6 @@ class TracesService(
         client
             .getTrace(traceId)
             .map { trace -> assembler.detail(trace, query.maxSpans) }
-
-    private fun boundedTraceLimit(limit: Int?): Int =
-        (limit ?: query.maxTraces).coerceIn(1, query.maxTraces)
 
     private fun summaryLine(
         userId: String,
