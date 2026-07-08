@@ -15,7 +15,7 @@
  */
 package com.opssage.agent.llm
 
-interface LlmClient {
+fun interface LlmClient {
 
     fun investigate(
         systemPrompt: String,

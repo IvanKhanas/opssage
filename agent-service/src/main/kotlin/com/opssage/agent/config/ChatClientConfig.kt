@@ -46,7 +46,7 @@ class ChatClientConfig {
             payload = mapOf("count" to maskedCallbacks.size)
         }
         return builder
-            .defaultToolCallbacks(*maskedCallbacks)
+            .defaultTools(maskedCallbacks)
             .build()
     }
 }

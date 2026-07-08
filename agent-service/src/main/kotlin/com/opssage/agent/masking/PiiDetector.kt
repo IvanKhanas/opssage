@@ -15,7 +15,7 @@
  */
 package com.opssage.agent.masking
 
-interface PiiDetector {
+fun interface PiiDetector {
 
     fun detect(text: String): List<PiiSpan>
 }
