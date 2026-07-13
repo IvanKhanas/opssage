@@ -31,4 +31,6 @@ data class SreProperties(
     val catalogTtl: Duration,
     @field:Min(1)
     val toolConcurrency: Int = 6,
+    @field:Min(1)
+    val maxInFlightToolCalls: Int = 32,
 )

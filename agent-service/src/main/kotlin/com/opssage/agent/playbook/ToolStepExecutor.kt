@@ -41,16 +41,21 @@ class ToolStepExecutor(
     private val dispatcher: CoroutineDispatcher = AgentDispatchers.mcpBlocking,
 ) {
 
-    private val gate = Semaphore(properties.toolConcurrency)
+    private val globalGate = Semaphore(properties.maxInFlightToolCalls)
 
     fun execute(steps: List<ToolStep>): List<Observation> {
         if (steps.isEmpty()) {
             return emptyList()
         }
+        val investigationGate = Semaphore(properties.toolConcurrency)
         return runBlocking {
             steps
                 .map { step ->
-                    async(dispatcher) { gate.withPermit { observe(step) } }
+                    async(dispatcher) {
+                        investigationGate.withPermit {
+                            globalGate.withPermit { observe(step) }
+                        }
+                    }
                 }.awaitAll()
         }
     }

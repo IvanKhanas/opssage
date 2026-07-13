@@ -29,6 +29,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 import tools.jackson.module.kotlin.jacksonObjectMapper
 
 import java.time.Duration
+import java.util.concurrent.Callable
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @ExtendWith(MockKExtension::class)
 class ToolStepExecutorTest {
@@ -106,6 +110,27 @@ class ToolStepExecutorTest {
 
         assertThat(arguments.captured)
             .isEqualTo("""{"service":"checkout","lookback":"PT2H"}""")
+    }
+
+    @Test
+    fun `concurrent investigations run their fan-outs without a shared cap`() {
+        val width = 5
+        val bothFanOuts = CyclicBarrier(2 * width)
+        every { registry.call(any(), any()) } answers {
+            bothFanOuts.await(5, TimeUnit.SECONDS)
+            "ok"
+        }
+        val steps = (1..width).map { step("tool$it") }
+        val pool = Executors.newFixedThreadPool(2)
+        try {
+            val first = pool.submit(Callable { executor.execute(steps) })
+            val second = pool.submit(Callable { executor.execute(steps) })
+
+            assertThat(first.get(10, TimeUnit.SECONDS)).allMatch { it.succeeded }
+            assertThat(second.get(10, TimeUnit.SECONDS)).allMatch { it.succeeded }
+        } finally {
+            pool.shutdownNow()
+        }
     }
 
     private fun step(tool: String): ToolStep =
