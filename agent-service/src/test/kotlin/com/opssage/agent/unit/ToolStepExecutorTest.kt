@@ -18,6 +18,7 @@ package com.opssage.agent.unit
 import com.opssage.agent.config.SreProperties
 import com.opssage.agent.config.ToolExecutionRuntime
 import com.opssage.agent.masking.MaskedToolRegistry
+import com.opssage.agent.model.Observation
 import com.opssage.agent.playbook.ToolStep
 import com.opssage.agent.playbook.ToolStepExecutor
 import io.mockk.every
@@ -25,17 +26,21 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.slot
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import tools.jackson.module.kotlin.jacksonObjectMapper
 
 import java.time.Duration
 import java.util.concurrent.Callable
-import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 
 @ExtendWith(MockKExtension::class)
 class ToolStepExecutorTest {
@@ -43,15 +48,25 @@ class ToolStepExecutorTest {
     @MockK
     lateinit var registry: MaskedToolRegistry
 
+    private val dispatcher: ExecutorCoroutineDispatcher =
+        Executors
+            .newFixedThreadPool(TEST_DISPATCHER_THREADS)
+            .asCoroutineDispatcher()
+
     private val executor by lazy {
         ToolStepExecutor(
             registry,
             jacksonObjectMapper(),
             ToolExecutionRuntime(
                 SreProperties("checkout", Duration.ofMinutes(5)),
-                Dispatchers.Default,
+                dispatcher,
             ),
         )
+    }
+
+    @AfterEach
+    fun closeDispatcher() {
+        dispatcher.close()
     }
 
     @Test
@@ -120,10 +135,16 @@ class ToolStepExecutorTest {
 
     @Test
     fun `concurrent investigations run their fan-outs without a shared cap`() {
-        val width = 5
-        val bothFanOuts = CyclicBarrier(2 * width)
+        val width = 2
+        val expectedConcurrentCalls = 2 * width
+        val started = CountDownLatch(expectedConcurrentCalls)
+        val release = CountDownLatch(1)
+        val active = AtomicInteger()
         every { registry.call(any(), any()) } answers {
-            bothFanOuts.await(5, TimeUnit.SECONDS)
+            active.incrementAndGet()
+            started.countDown()
+            release.await(10, TimeUnit.SECONDS)
+            active.decrementAndGet()
             "ok"
         }
         val steps = (1..width).map { step("tool$it") }
@@ -132,13 +153,21 @@ class ToolStepExecutorTest {
             val first = pool.submit(Callable { executor.execute(steps) })
             val second = pool.submit(Callable { executor.execute(steps) })
 
-            assertThat(first.get(10, TimeUnit.SECONDS))
-                .allMatch { it.succeeded }
-            assertThat(second.get(10, TimeUnit.SECONDS))
-                .allMatch { it.succeeded }
+            assertThat(started.await(10, TimeUnit.SECONDS)).isTrue()
+            assertThat(active.get()).isEqualTo(expectedConcurrentCalls)
+
+            release.countDown()
+            assertSucceeded(first)
+            assertSucceeded(second)
         } finally {
+            release.countDown()
             pool.shutdownNow()
         }
+    }
+
+    private fun assertSucceeded(result: Future<List<Observation>>) {
+        assertThat(result.get(10, TimeUnit.SECONDS))
+            .allMatch { it.succeeded }
     }
 
     private fun step(tool: String): ToolStep =
@@ -146,4 +175,8 @@ class ToolStepExecutorTest {
             tool,
             mapOf("service" to "checkout"),
         )
+
+    private companion object {
+        const val TEST_DISPATCHER_THREADS = 8
+    }
 }
