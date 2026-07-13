@@ -15,12 +15,4 @@
  */
 package com.opssage.knowledge.model
 
-data class FactProposal(
-    val serviceId: String,
-    val symptom: String,
-    val rootCause: String,
-    val resolution: String? = null,
-    val verdict: FactVerdict = FactVerdict.CONFIRMED_CAUSE,
-    val confidence: Confidence = Confidence.MEDIUM,
-    val investigationId: String? = null,
-)
+enum class FactVerdict { CONFIRMED_CAUSE, RULED_OUT, FALSE_ALARM }

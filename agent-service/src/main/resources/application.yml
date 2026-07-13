@@ -17,8 +17,12 @@ spring:
           connections:
             sre:
               url: ${SRE_MCP_URL:http://localhost:8083}
+            knowledge:
+              url: ${KNOWLEDGE_MCP_URL:http://localhost:8082}
 
 agent:
+  tools:
+    write-tools: ${AGENT_WRITE_TOOLS:proposeInvestigationFact,saveInvestigationSummary,proposeNewSkill}
   memory:
     max-messages: ${AGENT_MEMORY_MAX_MESSAGES:20}
   masking:

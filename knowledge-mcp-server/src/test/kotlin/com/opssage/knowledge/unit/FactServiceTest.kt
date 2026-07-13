@@ -21,6 +21,7 @@ import com.opssage.knowledge.exception.ResourceNotFoundException
 import com.opssage.knowledge.model.Fact
 import com.opssage.knowledge.model.FactProposal
 import com.opssage.knowledge.model.FactStatus
+import com.opssage.knowledge.model.FactVerdict
 import com.opssage.knowledge.repository.FactRepository
 import com.opssage.knowledge.repository.FactVectorIndex
 import com.opssage.knowledge.service.FactService
@@ -139,6 +140,29 @@ class FactServiceTest {
         assertThat(saved.captured.approvedBy).isNull()
         assertThat(saved.captured.approvedAt).isNull()
         assertThat(saved.captured.embedding).isEqualTo(EMBEDDING)
+    }
+
+    @ParameterizedTest
+    @EnumSource(FactVerdict::class)
+    fun `create carries the proposal verdict onto the stored fact`(
+        verdict: FactVerdict,
+    ) {
+        val proposal =
+            FactProposal(
+                serviceId = "payment-svc",
+                symptom = "high latency",
+                rootCause = "connection pool exhausted",
+                verdict = verdict,
+            )
+        val saved = slot<Fact>()
+        every { index.embedding(any()) } returns Mono.just(EMBEDDING)
+        every { repository.save(capture(saved)) } answers {
+            Mono.just(saved.captured)
+        }
+
+        service.create(proposal).block()
+
+        assertThat(saved.captured.verdict).isEqualTo(verdict)
     }
 
     @Test

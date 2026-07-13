@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.knowledge.model
+package com.opssage.agent.config
 
-data class FactProposal(
-    val serviceId: String,
-    val symptom: String,
-    val rootCause: String,
-    val resolution: String? = null,
-    val verdict: FactVerdict = FactVerdict.CONFIRMED_CAUSE,
-    val confidence: Confidence = Confidence.MEDIUM,
-    val investigationId: String? = null,
-)
+import org.springframework.boot.context.properties.ConfigurationProperties
+
+@ConfigurationProperties("agent.tools")
+data class ToolPolicyProperties(
+    val writeTools: List<String>,
+) {
+
+    fun isWriteTool(toolName: String): Boolean =
+        writeTools.any { name ->
+            toolName == name || toolName.endsWith("_$name")
+        }
+}

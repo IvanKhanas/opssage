@@ -18,6 +18,7 @@ package com.opssage.knowledge.unit.fixture
 import com.opssage.knowledge.model.Confidence
 import com.opssage.knowledge.model.Fact
 import com.opssage.knowledge.model.FactStatus
+import com.opssage.knowledge.model.FactVerdict
 import net.datafaker.Faker
 
 import java.util.UUID
@@ -32,6 +33,7 @@ object FactFixture {
         symptom: String = faker.lorem().sentence(),
         rootCause: String = faker.lorem().sentence(),
         status: FactStatus = FactStatus.PROPOSED,
+        verdict: FactVerdict = FactVerdict.CONFIRMED_CAUSE,
         confidence: Confidence = Confidence.MEDIUM,
     ) = Fact(
         id = id,
@@ -39,6 +41,7 @@ object FactFixture {
         symptom = symptom,
         rootCause = rootCause,
         status = status,
+        verdict = verdict,
         confidence = confidence,
     )
 }

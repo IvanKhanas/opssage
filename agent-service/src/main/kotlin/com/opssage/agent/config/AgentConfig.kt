@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Configuration
     WindowProperties::class,
     LlmProperties::class,
     SreProperties::class,
+    ToolPolicyProperties::class,
 )
 class AgentConfig {
 

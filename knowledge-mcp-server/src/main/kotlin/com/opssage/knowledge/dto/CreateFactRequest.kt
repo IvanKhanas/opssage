@@ -17,6 +17,7 @@ package com.opssage.knowledge.dto
 
 import com.opssage.knowledge.model.Confidence
 import com.opssage.knowledge.model.FactProposal
+import com.opssage.knowledge.model.FactVerdict
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
@@ -32,6 +33,7 @@ data class CreateFactRequest(
     val rootCause: String,
     @field:Size(max = 4_000)
     val resolution: String? = null,
+    val verdict: FactVerdict = FactVerdict.CONFIRMED_CAUSE,
     val confidence: Confidence = Confidence.MEDIUM,
     @field:Size(max = 128)
     val investigationId: String? = null,
@@ -43,6 +45,7 @@ data class CreateFactRequest(
             symptom = symptom,
             rootCause = rootCause,
             resolution = resolution,
+            verdict = verdict,
             confidence = confidence,
             investigationId = investigationId,
         )

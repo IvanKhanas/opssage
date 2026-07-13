@@ -62,6 +62,7 @@ class FactService(
                 symptom = proposal.symptom,
                 rootCause = proposal.rootCause,
                 resolution = proposal.resolution,
+                verdict = proposal.verdict,
                 confidence = proposal.confidence,
                 investigationId = proposal.investigationId,
             )

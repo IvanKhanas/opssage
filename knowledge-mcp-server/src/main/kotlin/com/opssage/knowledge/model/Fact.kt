@@ -34,6 +34,7 @@ data class Fact(
     val rootCause: String,
     val resolution: String? = null,
     val status: FactStatus = FactStatus.PROPOSED,
+    val verdict: FactVerdict = FactVerdict.CONFIRMED_CAUSE,
     val confidence: Confidence = Confidence.MEDIUM,
     val investigationId: String? = null,
     val createdAt: Instant = Instant.now(),
