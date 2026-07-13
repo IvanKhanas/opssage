@@ -30,6 +30,7 @@ class OnnxNerPiiDetectorTest {
                 modelPath = "",
                 scoreThreshold = 0.5,
                 entityTokens = mapOf("PER" to "[NAME]"),
+                maxConcurrentInferences = 4,
             )
 
         assertThatThrownBy { OnnxNerPiiDetector(properties) }

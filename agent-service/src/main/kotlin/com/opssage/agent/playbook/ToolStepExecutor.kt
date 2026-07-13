@@ -15,6 +15,7 @@
  */
 package com.opssage.agent.playbook
 
+import com.opssage.agent.config.AgentDispatchers
 import com.opssage.agent.config.SreProperties
 import com.opssage.agent.masking.MaskedToolRegistry
 import com.opssage.agent.model.Observation
@@ -22,7 +23,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.ObjectMapper
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
@@ -38,7 +38,7 @@ class ToolStepExecutor(
     private val registry: MaskedToolRegistry,
     private val mapper: ObjectMapper,
     private val properties: SreProperties,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher = AgentDispatchers.mcpBlocking,
 ) {
 
     private val gate = Semaphore(properties.toolConcurrency)

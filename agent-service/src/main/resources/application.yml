@@ -1,6 +1,9 @@
 spring:
   application:
     name: agent-service
+  threads:
+    virtual:
+      enabled: ${AGENT_VIRTUAL_THREADS_ENABLED:true}
   mongodb:
     uri: ${AGENT_MONGODB_URI:mongodb://localhost:27017/opssage-agent}
   ai:
@@ -41,6 +44,7 @@ agent:
       enabled: ${AGENT_MASKING_NER_ENABLED:false}
       model-path: ${AGENT_MASKING_NER_MODEL_PATH:}
       score-threshold: ${AGENT_MASKING_NER_SCORE_THRESHOLD:0.5}
+      max-concurrent-inferences: ${AGENT_MASKING_NER_MAX_CONCURRENT_INFERENCES:4}
       entity-tokens:
         PER: "[NAME]"
         LOC: "[LOCATION]"

@@ -25,6 +25,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PreDestroy
 
 import java.nio.file.Paths
+import java.util.concurrent.Semaphore
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -39,12 +40,19 @@ class OnnxNerPiiDetector(
 
     private val model: ZooModel<String, Array<NamedEntity>> = loadModel()
 
+    private val inferenceGate = Semaphore(properties.maxConcurrentInferences)
+
     override fun detect(text: String): List<PiiSpan> {
         if (text.isBlank()) {
             return emptyList()
         }
-        return model.newPredictor().use { predictor ->
-            predict(predictor, text)
+        inferenceGate.acquire()
+        return try {
+            model.newPredictor().use { predictor ->
+                predict(predictor, text)
+            }
+        } finally {
+            inferenceGate.release()
         }
     }
 

@@ -15,13 +15,13 @@
  */
 package com.opssage.agent.config
 
-import org.springframework.boot.context.properties.ConfigurationProperties
+import java.util.concurrent.Executors
 
-@ConfigurationProperties("agent.masking.ner")
-data class NerProperties(
-    val enabled: Boolean,
-    val modelPath: String,
-    val scoreThreshold: Double,
-    val entityTokens: Map<String, String>,
-    val maxConcurrentInferences: Int,
-)
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
+
+object AgentDispatchers {
+
+    val mcpBlocking: ExecutorCoroutineDispatcher =
+        Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+}
