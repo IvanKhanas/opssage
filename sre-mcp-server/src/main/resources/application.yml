@@ -58,6 +58,7 @@ sre:
     user-tag: ${VICTORIA_TRACES_USER_TAG:userId}
     namespace-tag: ${VICTORIA_TRACES_NAMESPACE_TAG:namespace}
     error-tag: ${VICTORIA_TRACES_ERROR_TAG:error}
+    search-candidate-multiplier: ${VICTORIA_TRACES_SEARCH_CANDIDATE_MULTIPLIER:5}
   kubernetes:
     base-url: ${KUBERNETES_API_URL:https://kubernetes.default.svc}
     token: ${KUBERNETES_API_TOKEN:}

@@ -39,8 +39,16 @@ class LlmVerdictParserTest {
     fun `parses a strict schema verdict`() {
         val verdict =
             parser.parse(
-                """{"summary":"root cause","confidence":"HIGH",""" +
-                    """"evidence":["log a","metric b"]}""",
+                """
+                {
+                  "summary": "root cause",
+                  "confidence": "HIGH",
+                  "evidence": [
+                    "log a",
+                    "metric b"
+                  ]
+                }
+                """.trimIndent(),
             )
 
         assertThat(verdict).isNotNull
@@ -115,8 +123,15 @@ class LlmVerdictParserTest {
     fun `defaults confidence to LOW when it is invalid`(level: String) {
         val verdict =
             parser.parse(
-                """{"summary":{"k":"v"},"confidence":"$level",""" +
-                    """"evidence":"not an array"}""",
+                """
+                {
+                  "summary": {
+                    "k": "v"
+                  },
+                  "confidence": "$level",
+                  "evidence": "not an array"
+                }
+                """.trimIndent(),
             )
 
         assertThat(verdict).isNotNull
@@ -126,7 +141,16 @@ class LlmVerdictParserTest {
 
     @Test
     fun `defaults confidence to LOW when it is missing`() {
-        val verdict = parser.parse("""{"summary":{"k":"v"}}""")
+        val verdict =
+            parser.parse(
+                """
+                {
+                  "summary": {
+                    "k": "v"
+                  }
+                }
+                """.trimIndent(),
+            )
 
         assertThat(verdict?.confidence).isEqualTo(Confidence.LOW)
     }

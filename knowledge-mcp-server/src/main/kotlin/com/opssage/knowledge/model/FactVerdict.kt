@@ -13,20 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.knowledge.model
 
-import jakarta.validation.constraints.Min
-
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.validation.annotation.Validated
-
-@Validated
-@ConfigurationProperties("agent.masking.ner")
-data class NerProperties(
-    val enabled: Boolean,
-    val modelPath: String,
-    val scoreThreshold: Double,
-    val entityTokens: Map<String, String>,
-    @field:Min(1)
-    val maxConcurrentInferences: Int,
-)
+enum class FactVerdict { CONFIRMED_CAUSE, RULED_OUT, FALSE_ALARM }

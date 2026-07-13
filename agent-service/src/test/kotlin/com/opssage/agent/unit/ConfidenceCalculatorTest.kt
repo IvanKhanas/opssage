@@ -265,16 +265,53 @@ class ConfidenceCalculatorTest {
         )
 
     private companion object {
-        const val TRACES =
-            """{"traces":[{"traceId":"abc","durationMs":4200.0}]}"""
+        val TRACES =
+            """
+            {
+              "traces": [
+                {
+                  "traceId": "abc",
+                  "durationMs": 4200.0
+                }
+              ]
+            }
+            """.trimIndent()
 
-        const val NO_TRACES = """{"traces":[],"confidence":"LOW"}"""
+        val NO_TRACES =
+            """
+            {
+              "traces": [],
+              "confidence": "LOW"
+            }
+            """.trimIndent()
 
-        const val NO_MATCHES = """{"topErrors":[],"confidence":"LOW"}"""
+        val NO_MATCHES =
+            """
+            {
+              "topErrors": [],
+              "confidence": "LOW"
+            }
+            """.trimIndent()
 
-        const val FLEET_ERRORS = """{"topErrors":[{"count":240}]}"""
+        val FLEET_ERRORS =
+            """
+            {
+              "topErrors": [
+                {
+                  "count": 240
+                }
+              ]
+            }
+            """.trimIndent()
 
-        const val CONTENT_ARRAY =
-            """[{"type":"text","text":"{\"confidence\":\"HIGH\"}"}]"""
+        val CONTENT_ARRAY =
+            """
+            [
+              {
+                "type": "text",
+                "text": "{\"confidence\":\"HIGH\"}"
+              }
+            ]
+            """.trimIndent()
     }
 }

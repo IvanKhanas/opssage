@@ -20,6 +20,7 @@ data class FactProposal(
     val symptom: String,
     val rootCause: String,
     val resolution: String? = null,
+    val verdict: FactVerdict = FactVerdict.CONFIRMED_CAUSE,
     val confidence: Confidence = Confidence.MEDIUM,
     val investigationId: String? = null,
 )

@@ -15,18 +15,20 @@
  */
 package com.opssage.agent.config
 
-import jakarta.validation.constraints.Min
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Semaphore
 
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.validation.annotation.Validated
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.stereotype.Component
 
-@Validated
-@ConfigurationProperties("agent.masking.ner")
-data class NerProperties(
-    val enabled: Boolean,
-    val modelPath: String,
-    val scoreThreshold: Double,
-    val entityTokens: Map<String, String>,
-    @field:Min(1)
-    val maxConcurrentInferences: Int,
-)
+@Component
+class ToolExecutionRuntime(
+    properties: SreProperties,
+    @param:Qualifier("mcpBlockingDispatcher")
+    val dispatcher: CoroutineDispatcher,
+) {
+
+    val toolConcurrency: Int = properties.toolConcurrency
+
+    val globalGate: Semaphore = Semaphore(properties.maxInFlightToolCalls)
+}

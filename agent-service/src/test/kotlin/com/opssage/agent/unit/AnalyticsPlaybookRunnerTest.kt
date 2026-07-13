@@ -240,13 +240,45 @@ class AnalyticsPlaybookRunnerTest {
     private companion object {
         val SERVICES = listOf("payment-service", "deposit-service")
 
-        const val MATCHED_LOGS = """{"topErrors":[{"count":2}]}"""
-        const val NO_MATCHES = """{"topErrors":[]}"""
-        const val NO_TRACES = """{"traces":[]}"""
+        val MATCHED_LOGS =
+            """
+            {
+              "topErrors": [
+                {
+                  "count": 2
+                }
+              ]
+            }
+            """.trimIndent()
 
-        const val HEALTH_JSON =
-            """{"service":"payment-service","signals":[{"metricName":""" +
-                """"error_rate","stats":{"latest":0.2}}]}"""
+        val NO_MATCHES =
+            """
+            {
+              "topErrors": []
+            }
+            """.trimIndent()
+
+        val NO_TRACES =
+            """
+            {
+              "traces": []
+            }
+            """.trimIndent()
+
+        val HEALTH_JSON =
+            """
+            {
+              "service": "payment-service",
+              "signals": [
+                {
+                  "metricName": "error_rate",
+                  "stats": {
+                    "latest": 0.2
+                  }
+                }
+              ]
+            }
+            """.trimIndent()
 
         val WINDOW =
             AnchorWindow(

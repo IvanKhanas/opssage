@@ -86,7 +86,12 @@ class FleetRankingTest {
                 listOf(
                     Observation(
                         SreTools.GET_SERVICE_HEALTH,
-                        """{"service":"quiet-service","signals":[]}""",
+                        """
+                        {
+                          "service": "quiet-service",
+                          "signals": []
+                        }
+                        """.trimIndent(),
                         succeeded = true,
                     ),
                     health("payment-service", 0.2065, 4.722),
@@ -109,7 +114,12 @@ class FleetRankingTest {
                     ),
                     Observation(
                         SreTools.FIND_SERVICE_TRACES,
-                        """{"service":"trace-only-service","traces":[]}""",
+                        """
+                        {
+                          "service": "trace-only-service",
+                          "traces": []
+                        }
+                        """.trimIndent(),
                         succeeded = true,
                     ),
                 ),

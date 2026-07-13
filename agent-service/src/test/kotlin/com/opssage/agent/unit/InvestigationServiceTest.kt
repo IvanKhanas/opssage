@@ -399,6 +399,15 @@ class InvestigationServiceTest {
     private companion object {
         val FIXED_NOW: Instant = Instant.parse("2026-07-08T10:00:00Z")
 
-        const val CONFIRMING_TRACES = """{"traces":[{"traceId":"abc"}]}"""
+        val CONFIRMING_TRACES =
+            """
+            {
+              "traces": [
+                {
+                  "traceId": "abc"
+                }
+              ]
+            }
+            """.trimIndent()
     }
 }

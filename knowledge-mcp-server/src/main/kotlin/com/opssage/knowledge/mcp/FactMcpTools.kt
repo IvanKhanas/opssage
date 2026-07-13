@@ -20,6 +20,7 @@ import com.opssage.knowledge.config.PaginationProperties
 import com.opssage.knowledge.model.Confidence
 import com.opssage.knowledge.model.Fact
 import com.opssage.knowledge.model.FactProposal
+import com.opssage.knowledge.model.FactVerdict
 import com.opssage.knowledge.service.FactService
 import com.opssage.knowledge.util.blockingGet
 import com.opssage.knowledge.util.blockingList
@@ -38,7 +39,13 @@ class FactMcpTools(
     @Tool(
         description =
             "Retrieve all approved diagnostic facts for a given service. " +
-                "Use this to check if similar incidents have been investigated before.",
+                "Use this to check if similar incidents have been " +
+                "investigated before. Each fact carries a verdict: " +
+                "CONFIRMED_CAUSE means the root cause is real; RULED_OUT " +
+                "means that cause was investigated for this symptom and " +
+                "disproven; FALSE_ALARM means the symptom turned out to be " +
+                "benign. Treat RULED_OUT and FALSE_ALARM facts as causes to " +
+                "exclude, never as the explanation.",
     )
     fun getFactsForService(
         serviceId: String,
@@ -56,7 +63,12 @@ class FactMcpTools(
                 "are most similar in meaning to the query, ranked by " +
                 "relevance. Optionally restrict the search to a single " +
                 "service. Prefer this over exact keyword matching: it finds " +
-                "related incidents even when the wording differs.",
+                "related incidents even when the wording differs. Each fact " +
+                "carries a verdict: CONFIRMED_CAUSE is a real root cause; " +
+                "RULED_OUT is a cause already disproven for this symptom; " +
+                "FALSE_ALARM is a symptom that proved benign. Use RULED_OUT " +
+                "and FALSE_ALARM facts as negative evidence to avoid " +
+                "repeating a disproven hypothesis, never as the cause.",
     )
     fun searchFacts(
         symptoms: String,
@@ -74,14 +86,17 @@ class FactMcpTools(
                 "trusted automatically: a human must review and approve it " +
                 "before it becomes searchable. Provide the affected service, " +
                 "the observed symptom, the root cause, an optional " +
-                "resolution, a confidence (LOW, MEDIUM or HIGH) and the " +
-                "originating investigation id.",
+                "resolution, a verdict (CONFIRMED_CAUSE when the root cause " +
+                "is real, RULED_OUT when it was disproven for this symptom, " +
+                "FALSE_ALARM when the symptom proved benign), a confidence " +
+                "(LOW, MEDIUM or HIGH) and the originating investigation id.",
     )
     fun proposeInvestigationFact(
         serviceId: String,
         symptom: String,
         rootCause: String,
         resolution: String?,
+        verdict: FactVerdict,
         confidence: Confidence,
         investigationId: String?,
     ): Fact =
@@ -92,6 +107,7 @@ class FactMcpTools(
                     symptom = symptom,
                     rootCause = rootCause,
                     resolution = resolution,
+                    verdict = verdict,
                     confidence = confidence,
                     investigationId = investigationId,
                 ),

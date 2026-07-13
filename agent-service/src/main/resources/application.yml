@@ -1,6 +1,9 @@
 spring:
   application:
     name: agent-service
+  threads:
+    virtual:
+      enabled: ${AGENT_VIRTUAL_THREADS_ENABLED:true}
   mongodb:
     uri: ${AGENT_MONGODB_URI:mongodb://localhost:27017/opssage-agent}
   ai:
@@ -17,6 +20,8 @@ spring:
           connections:
             sre:
               url: ${SRE_MCP_URL:http://localhost:8083}
+            knowledge:
+              url: ${KNOWLEDGE_MCP_URL:http://localhost:8082}
 
 agent:
   memory:
@@ -37,6 +42,7 @@ agent:
       enabled: ${AGENT_MASKING_NER_ENABLED:false}
       model-path: ${AGENT_MASKING_NER_MODEL_PATH:}
       score-threshold: ${AGENT_MASKING_NER_SCORE_THRESHOLD:0.5}
+      max-concurrent-inferences: ${AGENT_MASKING_NER_MAX_CONCURRENT_INFERENCES:4}
       entity-tokens:
         PER: "[NAME]"
         LOC: "[LOCATION]"
@@ -54,6 +60,7 @@ agent:
     namespace: ${AGENT_SRE_NAMESPACE:default}
     catalog-ttl: ${AGENT_SRE_CATALOG_TTL:5m}
     tool-concurrency: ${AGENT_SRE_TOOL_CONCURRENCY:6}
+    max-in-flight-tool-calls: ${AGENT_SRE_MAX_INFLIGHT_TOOL_CALLS:32}
 
 server:
   port: ${SERVER_PORT:8081}

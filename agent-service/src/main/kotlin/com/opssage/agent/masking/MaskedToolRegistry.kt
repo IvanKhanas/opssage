@@ -15,6 +15,7 @@
  */
 package com.opssage.agent.masking
 
+import com.opssage.agent.config.ToolPolicyProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 import org.springframework.ai.tool.ToolCallback
@@ -27,11 +28,13 @@ private val log = KotlinLogging.logger {}
 class MaskedToolRegistry(
     toolCallbackProviders: List<ToolCallbackProvider>,
     piiMasker: PiiMasker,
+    policy: ToolPolicyProperties,
 ) {
 
     val callbacks: List<ToolCallback> =
         toolCallbackProviders
             .flatMap { it.toolCallbacks.toList() }
+            .filter { policy.isReadTool(it.toolDefinition.name()) }
             .map { MaskingToolCallback(it, piiMasker) }
 
     private val byName: Map<String, ToolCallback> =
@@ -39,8 +42,12 @@ class MaskedToolRegistry(
 
     init {
         log.atInfo {
-            message = "Wrapped MCP tool callbacks with PII masking"
-            payload = mapOf("count" to callbacks.size)
+            message = "Wrapped read-only MCP tool callbacks with PII masking"
+            payload =
+                mapOf(
+                    "count" to callbacks.size,
+                    "allowedReadTools" to policy.readTools,
+                )
         }
     }
 
