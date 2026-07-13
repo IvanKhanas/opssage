@@ -51,19 +51,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
-      - name: Run tests and generate JaCoCo reports
-        run: ./gradlew test jacocoTestReport
+      - name: Run tests and generate Kover reports
+        run: ./gradlew test koverXmlReport
 
-      - name: Upload JaCoCo XML reports
+      - name: Upload Kover XML reports
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-xml-reports
+          name: kover-xml-reports
           if-no-files-found: warn
           path: |
-            agent-service/build/reports/jacoco/test
-            sre-mcp-server/build/reports/jacoco/test
-            knowledge-mcp-server/build/reports/jacoco/test
-            admin-service/build/reports/jacoco/test
+            agent-service/build/reports/kover/report.xml
+            sre-mcp-server/build/reports/kover/report.xml
+            knowledge-mcp-server/build/reports/kover/report.xml
+            admin-service/build/reports/kover/report.xml
 
   lint:
     name: Lint & Sonar
@@ -91,10 +91,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
-      - name: Download JaCoCo XML reports
+      - name: Download Kover XML reports
         uses: actions/download-artifact@v4
         with:
-          name: jacoco-xml-reports
+          name: kover-xml-reports
           path: .
 
       - name: Run Ktlint
