@@ -30,7 +30,7 @@ class AlertContextMcpTools(
     private val alertContextQuery: AlertContextQuery,
     private val resolver: TimeWindowResolver,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
 
     @Tool(
         description =

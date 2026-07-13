@@ -104,6 +104,93 @@ class KubernetesClientTest {
         )
     }
 
+    @Test
+    fun `falls back to the next app label when the first matches nothing`() {
+        server.stubFor(
+            get(urlPathEqualTo("/api/v1/namespaces/banking/pods"))
+                .withQueryParam(
+                    "labelSelector",
+                    equalTo("app.kubernetes.io/name=deposit-service"),
+                ).willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""{"items":[]}"""),
+                ),
+        )
+        server.stubFor(
+            get(urlPathEqualTo("/api/v1/namespaces/banking/pods"))
+                .withQueryParam(
+                    "labelSelector",
+                    equalTo("app=deposit-service"),
+                ).willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(PODS_BODY),
+                ),
+        )
+        server.stubFor(
+            get(urlPathEqualTo("/api/v1/namespaces/banking/events"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""{"items":[]}"""),
+                ),
+        )
+
+        val state =
+            client.serviceState("deposit-service", "banking").block()!!
+
+        assertThat(state.pods).hasSize(1)
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/namespaces/banking/pods"))
+                .withQueryParam(
+                    "labelSelector",
+                    equalTo("app.kubernetes.io/name=deposit-service"),
+                ),
+        )
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/namespaces/banking/pods"))
+                .withQueryParam(
+                    "labelSelector",
+                    equalTo("app=deposit-service"),
+                ),
+        )
+    }
+
+    @Test
+    fun `stops at the first app label that matches pods`() {
+        server.stubFor(
+            get(urlPathEqualTo("/api/v1/namespaces/banking/pods"))
+                .withQueryParam(
+                    "labelSelector",
+                    equalTo("app.kubernetes.io/name=deposit-service"),
+                ).willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(PODS_BODY),
+                ),
+        )
+        server.stubFor(
+            get(urlPathEqualTo("/api/v1/namespaces/banking/events"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""{"items":[]}"""),
+                ),
+        )
+
+        client.serviceState("deposit-service", "banking").block()!!
+
+        server.verify(
+            0,
+            getRequestedFor(urlPathEqualTo("/api/v1/namespaces/banking/pods"))
+                .withQueryParam(
+                    "labelSelector",
+                    equalTo("app=deposit-service"),
+                ),
+        )
+    }
+
     private companion object {
         private val server = WireMockServer(options().dynamicPort())
 

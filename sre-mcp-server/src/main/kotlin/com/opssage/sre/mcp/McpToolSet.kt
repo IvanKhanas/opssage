@@ -13,24 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.sre.client
+package com.opssage.sre.mcp
 
-data class PrometheusResponse(
-    val status: String = "",
-    val data: PrometheusData? = null,
-)
-
-data class PrometheusData(
-    val resultType: String = "",
-    val result: List<PrometheusSeries> = emptyList(),
-)
-
-data class PrometheusSeries(
-    val metric: Map<String, String> = emptyMap(),
-    val values: List<List<String>> = emptyList(),
-)
-
-data class PrometheusLabelValuesResponse(
-    val status: String = "",
-    val data: List<String> = emptyList(),
-)
+interface McpToolSet

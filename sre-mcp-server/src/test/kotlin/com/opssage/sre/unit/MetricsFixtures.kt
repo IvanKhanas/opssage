@@ -38,8 +38,8 @@ object MetricsFixtures {
             requestBucketMetric = "http_server_requests_seconds_bucket",
             serviceLabel = "service",
             namespaceLabel = "namespace",
-            errorLabel = "outcome",
-            errorOutcome = "SERVER_ERROR",
+            errorSelector = "outcome=\"SERVER_ERROR\"",
+            maxServices = 200,
         )
 
     fun queryProperties(): QueryProperties =

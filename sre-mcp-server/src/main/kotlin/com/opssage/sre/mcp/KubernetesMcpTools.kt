@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
 class KubernetesMcpTools(
     private val kubernetesService: KubernetesService,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
 
     @Tool(
         description =

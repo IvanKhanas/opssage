@@ -16,8 +16,8 @@
 package com.opssage.sre.mcp
 
 import com.opssage.sre.config.McpProperties
-import com.opssage.sre.dto.ServiceCorrectnessResult
-import com.opssage.sre.metrics.ServiceCorrectnessQuery
+import com.opssage.sre.contract.TelemetryContractQuery
+import com.opssage.sre.dto.TelemetryContractResult
 import com.opssage.sre.time.TimeWindowResolver
 import com.opssage.sre.util.Identifiers
 import com.opssage.sre.util.blockingGet
@@ -26,35 +26,35 @@ import org.springframework.ai.tool.annotation.Tool
 import org.springframework.stereotype.Component
 
 @Component
-class CorrectnessMcpTools(
-    private val correctness: ServiceCorrectnessQuery,
+class ContractMcpTools(
+    private val contract: TelemetryContractQuery,
     private val resolver: TimeWindowResolver,
     private val mcp: McpProperties,
 ) : McpToolSet {
 
     @Tool(
         description =
-            "Return failure ratios for instrumented business correctness " +
-                "invariants of a service. Use it when HTTP requests succeed " +
-                "but responses may be semantically wrong, incomplete or " +
-                "inconsistent. Invariant names are the values of the " +
-                "invariant label the service emits on its correctness " +
-                "metric; declare the expected ones on the service profile. " +
-                "LOW confidence means no correctness telemetry was observed.",
+            "Check whether this cluster actually provides the telemetry " +
+                "OpsSage expects: the request and histogram metrics, the " +
+                "service and namespace labels, the error matcher, the " +
+                "correctness metric, the log levels, the trace backend and " +
+                "the Kubernetes API. Use it when a tool returns nothing and " +
+                "you cannot tell whether the service is healthy or the " +
+                "telemetry is wired wrong. MISCONFIGURED means OpsSage reads " +
+                "the wrong thing; ABSENT means a capability is simply not " +
+                "installed; UNKNOWN means the window holds no data to judge.",
     )
-    fun getServiceCorrectness(
-        service: String,
+    fun validateTelemetryContract(
         namespace: String,
         lookback: String?,
-    ): ServiceCorrectnessResult {
-        Identifiers.require("service", service)
+    ): TelemetryContractResult {
         Identifiers.require("namespace", namespace)
         val window = resolver.fromLookback(lookback)
-        return correctness
-            .run(service, namespace, window)
+        return contract
+            .run(namespace, window)
             .blockingGet(
                 mcp.callTimeout,
-                "reading correctness signals for $service",
+                "validating the telemetry contract for $namespace",
             )
     }
 }

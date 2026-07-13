@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.sre.client
+package com.opssage.sre.dto
 
-data class PrometheusResponse(
-    val status: String = "",
-    val data: PrometheusData? = null,
+enum class ContractStatus {
+    OK,
+    ABSENT,
+    MISCONFIGURED,
+    UNKNOWN,
+}
+
+data class ContractCheck(
+    val name: String,
+    val status: ContractStatus,
+    val expected: String,
+    val observed: String,
+    val impact: String = "",
 )
 
-data class PrometheusData(
-    val resultType: String = "",
-    val result: List<PrometheusSeries> = emptyList(),
-)
-
-data class PrometheusSeries(
-    val metric: Map<String, String> = emptyMap(),
-    val values: List<List<String>> = emptyList(),
-)
-
-data class PrometheusLabelValuesResponse(
-    val status: String = "",
-    val data: List<String> = emptyList(),
+data class TelemetryContractResult(
+    val namespace: String,
+    val checks: List<ContractCheck>,
+    val summary: String,
 )

@@ -48,8 +48,7 @@ class PromQlTemplates(
     private fun selector(scope: MetricScope): String = "{${baseLabels(scope)}}"
 
     private fun errorSelector(scope: MetricScope): String =
-        "{${baseLabels(scope)}," +
-            "${metrics.errorLabel}=\"${metrics.errorOutcome}\"}"
+        "{${baseLabels(scope)},${metrics.errorSelector}}"
 
     private fun baseLabels(scope: MetricScope): String =
         "${metrics.serviceLabel}=\"${scope.service}\"," +

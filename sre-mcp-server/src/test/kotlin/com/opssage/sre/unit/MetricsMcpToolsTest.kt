@@ -19,6 +19,7 @@ import com.opssage.sre.config.McpProperties
 import com.opssage.sre.mcp.MetricsMcpTools
 import com.opssage.sre.metrics.DependencyImpactQuery
 import com.opssage.sre.metrics.RolloutComparisonQuery
+import com.opssage.sre.metrics.ServiceCatalogQuery
 import com.opssage.sre.metrics.ServiceHealthQuery
 import com.opssage.sre.time.TimeWindowResolver
 import io.mockk.every
@@ -44,6 +45,9 @@ class MetricsMcpToolsTest {
     private lateinit var dependencyImpactQuery: DependencyImpactQuery
 
     @MockK
+    private lateinit var serviceCatalogQuery: ServiceCatalogQuery
+
+    @MockK
     private lateinit var resolver: TimeWindowResolver
 
     private lateinit var tools: MetricsMcpTools
@@ -55,6 +59,7 @@ class MetricsMcpToolsTest {
                 serviceHealthQuery,
                 rolloutComparisonQuery,
                 dependencyImpactQuery,
+                serviceCatalogQuery,
                 resolver,
                 McpProperties(Duration.ofSeconds(1)),
             )

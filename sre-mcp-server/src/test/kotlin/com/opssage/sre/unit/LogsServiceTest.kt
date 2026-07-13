@@ -47,7 +47,7 @@ class LogsServiceTest {
             serviceField = "service",
             namespaceField = "namespace",
             levelField = "level",
-            errorLevel = "ERROR",
+            errorLevels = listOf("ERROR"),
             messageField = "_msg",
             traceField = "trace_id",
             timeField = "_time",

@@ -17,7 +17,10 @@ package com.opssage.sre.integration
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.absent
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import com.opssage.sre.client.VictoriaTracesClient
@@ -102,13 +105,82 @@ class VictoriaTracesClientTest {
         assertThat(traces[0].spans).hasSize(2)
     }
 
+    @Test
+    fun `never sends the namespace as a jaeger span tag filter`() {
+        stubTraces(TRACES_BODY)
+
+        client
+            .findTraces(
+                "deposit-service",
+                "banking",
+                "u1",
+                WINDOW,
+                20,
+            ).block()
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/select/jaeger/api/traces"))
+                .withQueryParam("tags", equalTo("""{"userId":"u1"}""")),
+        )
+    }
+
+    @Test
+    fun `omits the tag filter entirely when no user is given`() {
+        stubTraces(TRACES_BODY)
+
+        client
+            .findServiceTraces("deposit-service", "banking", WINDOW, 20)
+            .block()
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/select/jaeger/api/traces"))
+                .withQueryParam("tags", absent()),
+        )
+    }
+
+    @Test
+    fun `drops traces recorded in another namespace`() {
+        stubTraces(OTHER_NAMESPACE_BODY)
+
+        val traces =
+            client
+                .findServiceTraces("deposit-service", "banking", WINDOW, 20)
+                .block()!!
+
+        assertThat(traces).isEmpty()
+    }
+
+    private fun stubTraces(body: String) {
+        server.stubFor(
+            get(urlPathEqualTo("/select/jaeger/api/traces"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(body),
+                ),
+        )
+    }
+
     private companion object {
         private val server = WireMockServer(options().dynamicPort())
 
+        val WINDOW =
+            TimeWindow(
+                Instant.parse("2026-06-27T10:00:00Z"),
+                Instant.parse("2026-06-27T11:00:00Z"),
+            )
+
+        const val BANKING_PROCESSES =
+            """{"p1":{"serviceName":"gateway","tags":[{"key":"namespace","value":"banking"}]},"p2":{"serviceName":"deposit-service","tags":[{"key":"namespace","value":"banking"}]}}"""
+
+        const val SPANS =
+            """[{"spanID":"s1","operationName":"GET /pay","references":[],"startTime":1000000,"duration":500000,"tags":[{"key":"error","value":"unset"}],"processID":"p1"},{"spanID":"s2","operationName":"charge","references":[{"refType":"CHILD_OF","spanID":"s1"}],"startTime":1100000,"duration":300000,"tags":[{"key":"error","value":true}],"processID":"p2"}]"""
+
         val TRACES_BODY =
-            """
-            {"data":[{"traceID":"t1","spans":[{"spanID":"s1","operationName":"GET /pay","references":[],"startTime":1000000,"duration":500000,"tags":[{"key":"error","value":"unset"}],"processID":"p1"},{"spanID":"s2","operationName":"charge","references":[{"refType":"CHILD_OF","spanID":"s1"}],"startTime":1100000,"duration":300000,"tags":[{"key":"error","value":true}],"processID":"p2"}],"processes":{"p1":{"serviceName":"gateway"},"p2":{"serviceName":"deposit-service"}}}]}
-            """.trimIndent()
+            """{"data":[{"traceID":"t1","spans":$SPANS,"processes":$BANKING_PROCESSES}]}"""
+
+        val OTHER_NAMESPACE_BODY =
+            """{"data":[{"traceID":"t2","spans":$SPANS,"processes":{"p1":{"serviceName":"gateway","tags":[{"key":"namespace","value":"sandbox"}]},"p2":{"serviceName":"deposit-service","tags":[{"key":"namespace","value":"sandbox"}]}}}]}"""
 
         @JvmStatic
         @BeforeAll

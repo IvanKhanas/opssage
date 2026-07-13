@@ -18,11 +18,13 @@ package com.opssage.sre.mcp
 import com.opssage.sre.config.McpProperties
 import com.opssage.sre.dto.DependencyImpactResult
 import com.opssage.sre.dto.RolloutComparisonResult
+import com.opssage.sre.dto.ServiceCatalogResult
 import com.opssage.sre.dto.ServiceHealthResult
 import com.opssage.sre.metrics.DependencyImpactQuery
 import com.opssage.sre.metrics.DependencyQuery
 import com.opssage.sre.metrics.RolloutComparisonQuery
 import com.opssage.sre.metrics.RolloutQuery
+import com.opssage.sre.metrics.ServiceCatalogQuery
 import com.opssage.sre.metrics.ServiceHealthQuery
 import com.opssage.sre.time.TimeWindowResolver
 import com.opssage.sre.util.Identifiers
@@ -37,9 +39,23 @@ class MetricsMcpTools(
     private val serviceHealthQuery: ServiceHealthQuery,
     private val rolloutComparisonQuery: RolloutComparisonQuery,
     private val dependencyImpactQuery: DependencyImpactQuery,
+    private val serviceCatalogQuery: ServiceCatalogQuery,
     private val resolver: TimeWindowResolver,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
+
+    @Tool(
+        description =
+            "List the services that actually report telemetry, taken from " +
+                "the service label observed in the metrics store. These are " +
+                "exactly the names the other tools accept; a name outside " +
+                "this list yields no data. Use it to resolve the service a " +
+                "human described in prose before calling any other tool.",
+    )
+    fun listServices(): ServiceCatalogResult =
+        serviceCatalogQuery
+            .run()
+            .blockingGet(mcp.callTimeout, "listing known services")
 
     @Tool(
         description =

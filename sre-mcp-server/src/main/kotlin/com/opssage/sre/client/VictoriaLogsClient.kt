@@ -42,6 +42,42 @@ class VictoriaLogsClient(
         window: TimeWindow,
     ): Mono<List<LogRecord>> = errorLogs(LogSearch(service, namespace, window))
 
+    fun probe(
+        namespace: String,
+        window: TimeWindow,
+        errorsOnly: Boolean,
+    ): Mono<Int> =
+        victoriaLogsWebClient
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/select/logsql/query")
+                    .queryParam("query", "{query}")
+                    .build(
+                        mapOf(
+                            "query" to
+                                probeQuery(
+                                    namespace,
+                                    window,
+                                    errorsOnly,
+                                ),
+                        ),
+                    )
+            }.retrieve()
+            .bodyToMono(String::class.java)
+            .defaultIfEmpty("")
+            .map { body -> body.lineSequence().count(String::isNotBlank) }
+
+    private fun probeQuery(
+        namespace: String,
+        window: TimeWindow,
+        errorsOnly: Boolean,
+    ): String {
+        val levels = if (errorsOnly) "${errorLevelFilter()} " else ""
+        return "${logs.namespaceField}:=${quote(namespace)} " + levels +
+            "${logs.timeField}:[${window.from}, ${window.to}] | limit 1"
+    }
+
     fun errorLogs(search: LogSearch): Mono<List<LogRecord>> =
         Flux
             .range(0, pageCount())
@@ -89,10 +125,19 @@ class VictoriaLogsClient(
     ): String =
         "${logs.serviceField}:=${quote(search.service)} " +
             "${logs.namespaceField}:=${quote(search.namespace)} " +
-            "${logs.levelField}:=${quote(logs.errorLevel)} " +
+            "${errorLevelFilter()} " +
             "${logs.timeField}:[${search.window.from}, ${search.window.to}] " +
             "| sort by (${logs.timeField} desc) | offset $offset " +
             "| limit ${logs.maxSamples}"
+
+    private fun errorLevelFilter(): String =
+        logs.errorLevels
+            .filter(String::isNotBlank)
+            .joinToString(
+                separator = " OR ",
+                prefix = "(",
+                postfix = ")",
+            ) { level -> "${logs.levelField}:=${quote(level)}" }
 
     private fun pageCount(): Int =
         (logs.maxScanSamples + logs.maxSamples - 1) / logs.maxSamples

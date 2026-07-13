@@ -15,8 +15,13 @@
  */
 package com.opssage.sre.config
 
-import org.springframework.boot.context.properties.ConfigurationProperties
+import jakarta.validation.constraints.AssertTrue
+import jakarta.validation.constraints.NotBlank
 
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.validation.annotation.Validated
+
+@Validated
 @ConfigurationProperties("sre.victoria-metrics")
 data class MetricsProperties(
     val baseUrl: String,
@@ -24,6 +29,20 @@ data class MetricsProperties(
     val requestBucketMetric: String,
     val serviceLabel: String,
     val namespaceLabel: String,
-    val errorLabel: String,
-    val errorOutcome: String,
-)
+    @field:NotBlank
+    val errorSelector: String,
+    val maxServices: Int,
+) {
+    @AssertTrue(
+        message =
+            "sre.victoria-metrics.error-selector must be a label matcher " +
+                "fragment such as outcome=\"SERVER_ERROR\" or code=~\"5..\", " +
+                "without braces or line breaks",
+    )
+    fun hasContainedErrorSelector(): Boolean =
+        FORBIDDEN.none(errorSelector::contains)
+
+    private companion object {
+        val FORBIDDEN = listOf("{", "}", "\n", "\r")
+    }
+}

@@ -34,7 +34,7 @@ class LogsMcpTools(
     private val resolver: TimeWindowResolver,
     private val logs: LogsProperties,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
 
     @Tool(
         description =

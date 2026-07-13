@@ -33,7 +33,7 @@ class TracesMcpTools(
     private val tracesService: TracesService,
     private val resolver: TimeWindowResolver,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
 
     @Tool(
         description =
