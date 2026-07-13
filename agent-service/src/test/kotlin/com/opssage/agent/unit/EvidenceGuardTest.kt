@@ -89,7 +89,13 @@ class EvidenceGuardTest {
                 evidence = emptyList(),
             )
         val observation =
-            observation("""{"firstSeen":"2026-07-09T15:03:00.482Z"}""")
+            observation(
+                """
+                {
+                  "firstSeen": "2026-07-09T15:03:00.482Z"
+                }
+                """.trimIndent(),
+            )
 
         val grounded = guard.verify(verdict, grounding(observation))
 
@@ -149,7 +155,11 @@ class EvidenceGuardTest {
         val failed =
             Observation(
                 SreTools.GET_KUBERNETES_SERVICE_EVENTS,
-                """{"deployedAt":"2026-07-09T17:25:00Z"}""",
+                """
+                {
+                  "deployedAt": "2026-07-09T17:25:00Z"
+                }
+                """.trimIndent(),
                 succeeded = false,
             )
         val verdict =
@@ -182,17 +192,38 @@ class EvidenceGuardTest {
         val ROLLOUT_OUTPUT =
             observation(
                 """
-                {"deployedAt":"2026-07-09T15:03:00Z",
-                 "before":{"errorRate":0.0033},
-                 "after":{"errorRate":0.1994,"latencyP99":3.9},
-                 "topErrors":[{"fingerprint":"PaymentGatewayTimeout",
-                               "count":362}],
-                 "slowestSpan":"acquirer-gateway POST /authorise"}
+                {
+                  "deployedAt": "2026-07-09T15:03:00Z",
+                  "before": {
+                    "errorRate": 0.0033
+                  },
+                  "after": {
+                    "errorRate": 0.1994,
+                    "latencyP99": 3.9
+                  },
+                  "topErrors": [
+                    {
+                      "fingerprint": "PaymentGatewayTimeout",
+                      "count": 362
+                    }
+                  ],
+                  "slowestSpan": "acquirer-gateway POST /authorise"
+                }
                 """.trimIndent(),
             )
 
         val TRACE_OUTPUT =
-            observation("""{"traces":[{"traceId":"$KNOWN_TRACE"}]}""")
+            observation(
+                """
+                {
+                  "traces": [
+                    {
+                      "traceId": "$KNOWN_TRACE"
+                    }
+                  ]
+                }
+                """.trimIndent(),
+            )
 
         fun observation(output: String): Observation =
             Observation(SreTools.GET_SERVICE_HEALTH, output, succeeded = true)

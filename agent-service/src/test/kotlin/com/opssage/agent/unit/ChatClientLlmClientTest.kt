@@ -276,9 +276,17 @@ class ChatClientLlmClientTest {
     private companion object {
         const val OBSERVATION_MAX_CHARS = 6000
 
-        const val VALID_JSON =
-            """{"summary":"root cause","confidence":"HIGH",""" +
-                """"evidence":["log a","metric b"]}"""
+        val VALID_JSON =
+            """
+            {
+              "summary": "root cause",
+              "confidence": "HIGH",
+              "evidence": [
+                "log a",
+                "metric b"
+              ]
+            }
+            """.trimIndent()
 
         const val LENIENT_JSON =
             """

@@ -144,7 +144,15 @@ class ServiceCatalogTest {
     private companion object {
         val START: Instant = Instant.parse("2026-07-09T10:00:00Z")
 
-        const val CATALOG_JSON =
-            """{"services":["cart","checkout-service"],"count":2}"""
+        val CATALOG_JSON =
+            """
+            {
+              "services": [
+                "cart",
+                "checkout-service"
+              ],
+              "count": 2
+            }
+            """.trimIndent()
     }
 }
