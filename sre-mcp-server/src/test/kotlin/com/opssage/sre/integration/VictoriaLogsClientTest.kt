@@ -17,7 +17,9 @@ package com.opssage.sre.integration
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.containing
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import com.opssage.sre.client.VictoriaLogsClient
@@ -90,6 +92,29 @@ class VictoriaLogsClientTest {
         assertThat(records).isEmpty()
     }
 
+    @Test
+    fun `matches every configured error level in one logsql filter`() {
+        server.stubFor(
+            get(urlPathEqualTo("/select/logsql/query"))
+                .willReturn(aResponse().withStatus(200)),
+        )
+        val window =
+            TimeWindow(
+                Instant.parse("2026-06-27T10:00:00Z"),
+                Instant.parse("2026-06-27T11:00:00Z"),
+            )
+
+        client.errorLogs("deposit-service", "banking", window).block()
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/select/logsql/query"))
+                .withQueryParam(
+                    "query",
+                    containing("""(level:="ERROR" OR level:="error")"""),
+                ),
+        )
+    }
+
     private companion object {
         private val server = WireMockServer(options().dynamicPort())
 
@@ -115,6 +140,7 @@ class VictoriaLogsClientTest {
         @DynamicPropertySource
         fun properties(registry: DynamicPropertyRegistry) {
             registry.add("sre.victoria-logs.base-url") { server.baseUrl() }
+            registry.add("sre.victoria-logs.error-levels") { "ERROR,error" }
         }
     }
 }

@@ -64,6 +64,24 @@ class VictoriaMetricsClient(
                 }
             }
 
+    fun labelValues(label: String): Mono<List<String>> =
+        victoriaMetricsWebClient
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/api/v1/label/{label}/values")
+                    .build(mapOf("label" to label))
+            }.retrieve()
+            .bodyToMono<PrometheusLabelValuesResponse>()
+            .map { it.data }
+            .doOnError { error ->
+                log.atWarn {
+                    message = "VictoriaMetrics label values query failed"
+                    payload = mapOf("label" to label)
+                    cause = error
+                }
+            }
+
     private fun toSeries(series: PrometheusSeries): MetricSeries {
         val name = series.metric["__name__"].orEmpty()
         val labels = series.metric.filterKeys { it != "__name__" }

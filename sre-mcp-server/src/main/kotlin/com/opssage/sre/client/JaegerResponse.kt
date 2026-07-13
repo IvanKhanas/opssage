@@ -47,4 +47,9 @@ data class JaegerTag(
 
 data class JaegerProcess(
     val serviceName: String = "",
+    val tags: List<JaegerTag> = emptyList(),
+)
+
+data class JaegerServicesResponse(
+    val data: List<String> = emptyList(),
 )

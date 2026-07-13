@@ -55,7 +55,47 @@ class KubernetesClient(
                 }
             }
 
+    fun countPods(namespace: String): Mono<Int> = countPods(namespace, null)
+
+    fun firstMatchingLabel(namespace: String): Mono<String> =
+        Flux
+            .fromIterable(kubernetes.podSelectors())
+            .concatMap { label ->
+                countPods(namespace, label).map { count -> label to count }
+            }.filter { pair -> pair.second > 0 }
+            .next()
+            .map { pair -> pair.first }
+            .defaultIfEmpty("")
+
+    private fun countPods(
+        namespace: String,
+        labelKey: String?,
+    ): Mono<Int> =
+        kubernetesWebClient
+            .get()
+            .uri { builder ->
+                builder.path("/api/v1/namespaces/{ns}/pods")
+                if (labelKey != null) {
+                    builder.queryParam("labelSelector", labelKey)
+                }
+                builder.queryParam("limit", 1).build(namespace)
+            }.retrieve()
+            .bodyToMono<K8sPodList>()
+            .map { list -> list.items.size }
+
     private fun pods(
+        service: String,
+        namespace: String,
+    ): Mono<List<PodStatus>> =
+        Flux
+            .fromIterable(kubernetes.podSelectors())
+            .concatMap { label -> podsLabelled(label, service, namespace) }
+            .filter(List<PodStatus>::isNotEmpty)
+            .next()
+            .defaultIfEmpty(emptyList())
+
+    private fun podsLabelled(
+        label: String,
         service: String,
         namespace: String,
     ): Mono<List<PodStatus>> =
@@ -64,10 +104,8 @@ class KubernetesClient(
             .uri { builder ->
                 builder
                     .path("/api/v1/namespaces/{ns}/pods")
-                    .queryParam(
-                        "labelSelector",
-                        "${kubernetes.appLabel}=$service",
-                    ).queryParam("limit", query.maxPods)
+                    .queryParam("labelSelector", "$label=$service")
+                    .queryParam("limit", query.maxPods)
                     .build(namespace)
             }.retrieve()
             .bodyToMono<K8sPodList>()

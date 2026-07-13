@@ -38,6 +38,15 @@ class VictoriaTracesClient(
     private val mapper: ObjectMapper,
 ) {
 
+    fun services(): Mono<List<String>> =
+        victoriaTracesWebClient
+            .get()
+            .uri { builder ->
+                builder.path("${traces.jaegerApiPath}/services").build()
+            }.retrieve()
+            .bodyToMono<JaegerServicesResponse>()
+            .map(JaegerServicesResponse::data)
+
     fun findTraces(
         service: String,
         namespace: String,
@@ -51,15 +60,22 @@ class VictoriaTracesClient(
                 builder
                     .path("${traces.jaegerApiPath}/traces")
                     .queryParam("service", service)
-                    .queryParam("tags", "{tagsFilter}")
                     .queryParam("start", micros(window.from))
                     .queryParam("end", micros(window.to))
                     .queryParam("limit", limit)
-                    .build(mapOf("tagsFilter" to tags(namespace, userId)))
+                if (userId.isBlank()) {
+                    return@uri builder.build()
+                }
+                builder
+                    .queryParam("tags", TAGS_TEMPLATE)
+                    .build(mapOf(TAGS_VARIABLE to userTag(userId)))
             }.retrieve()
             .bodyToMono<JaegerResponse>()
-            .map { response -> response.data.map(::toTrace) }
-            .doOnError { error ->
+            .map { response ->
+                response.data
+                    .filter { belongsTo(it, namespace) }
+                    .map(::toTrace)
+            }.doOnError { error ->
                 log.atWarn {
                     message = "VictoriaTraces search failed"
                     payload =
@@ -96,16 +112,19 @@ class VictoriaTracesClient(
                 }
             }
 
-    private fun tags(
+    private fun userTag(userId: String): String =
+        mapper.writeValueAsString(mapOf(traces.userTag to userId))
+
+    private fun belongsTo(
+        trace: JaegerTrace,
         namespace: String,
-        userId: String,
-    ): String =
-        mapper.writeValueAsString(
-            buildMap {
-                put(traces.namespaceTag, namespace)
-                if (userId.isNotBlank()) put(traces.userTag, userId)
-            },
-        )
+    ): Boolean =
+        trace.processes.values.any { process ->
+            process.tags.any { tag ->
+                tag.key == traces.namespaceTag &&
+                    tag.value?.toString() == namespace
+            }
+        }
 
     private fun micros(instant: Instant): Long =
         instant.toEpochMilli() * MICROS_PER_MILLI
@@ -144,6 +163,8 @@ class VictoriaTracesClient(
     private companion object {
         const val CHILD_OF = "CHILD_OF"
         const val MICROS_PER_MILLI = 1000L
+        const val TAGS_VARIABLE = "tagsFilter"
+        const val TAGS_TEMPLATE = "{$TAGS_VARIABLE}"
         val NON_ERROR_VALUES = setOf("false", "0", "unset", "ok")
     }
 }

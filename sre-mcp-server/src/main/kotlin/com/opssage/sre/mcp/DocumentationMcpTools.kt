@@ -30,7 +30,7 @@ class DocumentationMcpTools(
     private val documentationService: DocumentationService,
     private val documentation: DocumentationProperties,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
 
     @Tool(
         description =

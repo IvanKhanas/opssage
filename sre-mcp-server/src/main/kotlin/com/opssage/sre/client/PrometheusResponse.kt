@@ -29,3 +29,8 @@ data class PrometheusSeries(
     val metric: Map<String, String> = emptyMap(),
     val values: List<List<String>> = emptyList(),
 )
+
+data class PrometheusLabelValuesResponse(
+    val status: String = "",
+    val data: List<String> = emptyList(),
+)

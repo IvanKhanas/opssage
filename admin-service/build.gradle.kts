@@ -1,7 +1,6 @@
 plugins {
     java
-    jacoco
-    id("opssage.jacoco-conventions")
+    id("opssage.kover-conventions")
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
@@ -10,6 +9,16 @@ plugins {
 
 tasks.test {
     jvmArgs("-XX:+EnableDynamicAgentLoading")
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("*AdminServiceApp*")
+            }
+        }
+    }
 }
 
 dependencies {

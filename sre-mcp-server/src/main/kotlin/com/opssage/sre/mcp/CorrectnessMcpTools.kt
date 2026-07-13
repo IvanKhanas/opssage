@@ -30,7 +30,7 @@ class CorrectnessMcpTools(
     private val correctness: ServiceCorrectnessQuery,
     private val resolver: TimeWindowResolver,
     private val mcp: McpProperties,
-) {
+) : McpToolSet {
 
     @Tool(
         description =

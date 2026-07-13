@@ -19,6 +19,10 @@ allprojects {
 sonar {
     properties {
         property("sonar.sourceEncoding", "UTF-8")
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            "**/build/reports/kover/report.xml",
+        )
     }
 }
 

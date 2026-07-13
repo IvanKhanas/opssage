@@ -25,11 +25,12 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
+import org.springframework.web.reactive.function.client.ClientRequest
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.WebClient
 
 private data class WebClientSettings(
     val baseUrl: String,
-    val bearerToken: String? = null,
     val caCertPath: String? = null,
 )
 
@@ -62,15 +63,17 @@ class HttpClients {
     fun kubernetesWebClient(
         http: HttpClientProperties,
         kubernetes: KubernetesProperties,
+        tokens: KubernetesTokens,
     ): WebClient =
-        webClient(
-            WebClientSettings(
-                baseUrl = kubernetes.baseUrl,
-                bearerToken = kubernetes.token,
-                caCertPath = kubernetes.caCertPath,
-            ),
-            http,
-        )
+        WebClient
+            .builder()
+            .baseUrl(kubernetes.baseUrl)
+            .clientConnector(
+                ReactorClientHttpConnector(
+                    nettyClient(http, kubernetes.caCertPath),
+                ),
+            ).filter(bearerToken(tokens))
+            .build()
 
     @Bean
     fun documentationWebClient(
@@ -90,27 +93,35 @@ class HttpClients {
                     )
             }.build()
 
+    private fun bearerToken(tokens: KubernetesTokens): ExchangeFilterFunction =
+        ExchangeFilterFunction { request, next ->
+            val token = tokens.current()
+            if (token.isBlank()) {
+                next.exchange(request)
+            } else {
+                next.exchange(
+                    ClientRequest
+                        .from(request)
+                        .header(
+                            HttpHeaders.AUTHORIZATION,
+                            "Bearer $token",
+                        ).build(),
+                )
+            }
+        }
+
     private fun webClient(
         settings: WebClientSettings,
         http: HttpClientProperties,
-    ): WebClient {
-        val builder =
-            WebClient
-                .builder()
-                .baseUrl(settings.baseUrl)
-                .clientConnector(
-                    ReactorClientHttpConnector(
-                        nettyClient(http, settings.caCertPath),
-                    ),
-                )
-        if (!settings.bearerToken.isNullOrBlank()) {
-            builder.defaultHeader(
-                HttpHeaders.AUTHORIZATION,
-                "Bearer ${settings.bearerToken}",
-            )
-        }
-        return builder.build()
-    }
+    ): WebClient =
+        WebClient
+            .builder()
+            .baseUrl(settings.baseUrl)
+            .clientConnector(
+                ReactorClientHttpConnector(
+                    nettyClient(http, settings.caCertPath),
+                ),
+            ).build()
 
     private fun nettyClient(
         http: HttpClientProperties,

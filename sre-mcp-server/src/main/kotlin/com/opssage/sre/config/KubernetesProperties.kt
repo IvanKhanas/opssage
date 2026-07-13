@@ -21,11 +21,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class KubernetesProperties(
     val baseUrl: String,
     val token: String,
-    val appLabel: String,
+    val tokenPath: String?,
+    val appLabels: List<String>,
     val caCertPath: String?,
 ) {
+    fun podSelectors(): List<String> =
+        appLabels.filter(String::isNotBlank).ifEmpty { DEFAULT_LABELS }
+
     override fun toString(): String =
         "KubernetesProperties(baseUrl=$baseUrl, " +
-            "appLabel=$appLabel, token=<redacted>, " +
-            "caCertPath=$caCertPath)"
+            "appLabels=$appLabels, token=<redacted>, " +
+            "tokenPath=$tokenPath, caCertPath=$caCertPath)"
+
+    private companion object {
+        val DEFAULT_LABELS = listOf("app")
+    }
 }

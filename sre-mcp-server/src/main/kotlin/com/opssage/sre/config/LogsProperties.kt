@@ -29,7 +29,7 @@ data class LogsProperties(
     val serviceField: String,
     val namespaceField: String,
     val levelField: String,
-    val errorLevel: String,
+    val errorLevels: List<String>,
     val messageField: String,
     val traceField: String,
     val timeField: String,
@@ -42,4 +42,11 @@ data class LogsProperties(
 ) {
     @AssertTrue
     fun hasValidScanLimit(): Boolean = maxScanSamples >= maxSamples
+
+    @AssertTrue(
+        message =
+            "sre.victoria-logs.error-levels must list at least one level, " +
+                "for example ERROR,error,FATAL",
+    )
+    fun hasErrorLevels(): Boolean = errorLevels.any(String::isNotBlank)
 }

@@ -15,13 +15,7 @@
  */
 package com.opssage.sre.config
 
-import com.opssage.sre.mcp.AlertContextMcpTools
-import com.opssage.sre.mcp.CorrectnessMcpTools
-import com.opssage.sre.mcp.DocumentationMcpTools
-import com.opssage.sre.mcp.KubernetesMcpTools
-import com.opssage.sre.mcp.LogsMcpTools
-import com.opssage.sre.mcp.MetricsMcpTools
-import com.opssage.sre.mcp.TracesMcpTools
+import com.opssage.sre.mcp.McpToolSet
 
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.ai.tool.method.MethodToolCallbackProvider
@@ -32,24 +26,9 @@ import org.springframework.context.annotation.Configuration
 class McpConfig {
 
     @Bean
-    fun toolCallbackProvider(
-        metricsMcpTools: MetricsMcpTools,
-        logsMcpTools: LogsMcpTools,
-        tracesMcpTools: TracesMcpTools,
-        kubernetesMcpTools: KubernetesMcpTools,
-        alertContextMcpTools: AlertContextMcpTools,
-        correctnessMcpTools: CorrectnessMcpTools,
-        documentationMcpTools: DocumentationMcpTools,
-    ): ToolCallbackProvider =
+    fun toolCallbackProvider(toolSets: List<McpToolSet>): ToolCallbackProvider =
         MethodToolCallbackProvider
             .builder()
-            .toolObjects(
-                metricsMcpTools,
-                logsMcpTools,
-                tracesMcpTools,
-                kubernetesMcpTools,
-                alertContextMcpTools,
-                correctnessMcpTools,
-                documentationMcpTools,
-            ).build()
+            .toolObjects(*toolSets.toTypedArray())
+            .build()
 }
