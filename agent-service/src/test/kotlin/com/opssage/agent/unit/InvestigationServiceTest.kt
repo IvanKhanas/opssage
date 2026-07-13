@@ -22,8 +22,11 @@ import com.opssage.agent.exception.ConversationNotFoundException
 import com.opssage.agent.exception.InvestigationFailedException
 import com.opssage.agent.investigation.AnchorWindowResolver
 import com.opssage.agent.investigation.ConfidenceCalculator
+import com.opssage.agent.investigation.EvidenceGuard
 import com.opssage.agent.investigation.InvestigationRequest
 import com.opssage.agent.investigation.InvestigationService
+import com.opssage.agent.investigation.ObservationCollector
+import com.opssage.agent.investigation.ObservationRequest
 import com.opssage.agent.llm.ConversationTurn
 import com.opssage.agent.llm.LlmClient
 import com.opssage.agent.llm.LlmInvocationException
@@ -35,7 +38,10 @@ import com.opssage.agent.model.ConversationStatus
 import com.opssage.agent.model.InvestigationType
 import com.opssage.agent.model.Message
 import com.opssage.agent.model.MessageRole
+import com.opssage.agent.model.Observation
+import com.opssage.agent.playbook.SreTools
 import com.opssage.agent.repository.ConversationRepository
+import com.opssage.agent.tools.ToolOutputReader
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -46,6 +52,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 import java.time.Clock
 import java.time.Duration
@@ -60,6 +67,9 @@ class InvestigationServiceTest {
     lateinit var llmClient: LlmClient
 
     @MockK
+    lateinit var observationCollector: ObservationCollector
+
+    @MockK
     lateinit var conversationRepository: ConversationRepository
 
     private val confidenceCalculator =
@@ -68,6 +78,7 @@ class InvestigationServiceTest {
                 mediumEvidenceThreshold = 1,
                 highEvidenceThreshold = 3,
             ),
+            ToolOutputReader(jacksonObjectMapper()),
         )
 
     private val anchorWindowResolver =
@@ -84,23 +95,31 @@ class InvestigationServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service =
-            InvestigationService(
-                llmClient,
-                confidenceCalculator,
-                conversationRepository,
-                anchorWindowResolver,
-                AgentMemoryProperties(maxMessages = 20),
-            )
+        service = serviceWith(AgentMemoryProperties(maxMessages = 20))
         every { conversationRepository.save(any()) } answers
             { (firstArg<Conversation>()).copy(id = "conv-1") }
+        every { observationCollector.collect(any()) } returns emptyList()
     }
+
+    private fun serviceWith(
+        memoryProperties: AgentMemoryProperties,
+    ): InvestigationService =
+        InvestigationService(
+            llmClient,
+            observationCollector,
+            EvidenceGuard(),
+            confidenceCalculator,
+            conversationRepository,
+            anchorWindowResolver,
+            memoryProperties,
+        )
 
     @Test
     fun `sends the user prompt to the model unchanged`() {
         val sent = slot<String>()
-        every { llmClient.investigate(any(), any(), capture(sent)) } returns
-            LlmVerdict("ok", Confidence.LOW, emptyList())
+        every {
+            llmClient.investigate(any(), any(), capture(sent), any())
+        } returns LlmVerdict("ok", Confidence.LOW, emptyList())
 
         service.investigate(
             InvestigationRequest(
@@ -116,8 +135,50 @@ class InvestigationServiceTest {
     }
 
     @Test
+    fun `runs the playbook for the planned target and forwards its output`() {
+        val observations =
+            listOf(Observation("getServiceHealth", "p99 is 2s", true))
+        val forwarded = slot<List<Observation>>()
+        every { observationCollector.collect(any()) } returns observations
+        every {
+            llmClient.investigate(any(), any(), any(), capture(forwarded))
+        } returns LlmVerdict("ok", Confidence.LOW, emptyList())
+
+        service.investigate(
+            InvestigationRequest(
+                title = "analytics",
+                investigationType = InvestigationType.ANALYTICAL_REQUEST,
+                input = "how many 5xx today",
+            ),
+        )
+
+        assertThat(forwarded.captured).isEqualTo(observations)
+    }
+
+    @Test
+    fun `passes investigation context to the observation collector`() {
+        val request = slot<ObservationRequest>()
+        every { observationCollector.collect(capture(request)) } returns
+            emptyList()
+        every { llmClient.investigate(any(), any(), any(), any()) } returns
+            LlmVerdict("ok", Confidence.LOW, emptyList())
+
+        service.investigate(
+            InvestigationRequest(
+                title = "analytics",
+                investigationType = InvestigationType.ANALYTICAL_REQUEST,
+                input = "what is going on",
+            ),
+        )
+
+        assertThat(request.captured.type)
+            .isEqualTo(InvestigationType.ANALYTICAL_REQUEST)
+        assertThat(request.captured.prompt.input).isEqualTo("what is going on")
+    }
+
+    @Test
     fun `caps model confidence when evidence is missing`() {
-        every { llmClient.investigate(any(), any(), any()) } returns
+        every { llmClient.investigate(any(), any(), any(), any()) } returns
             LlmVerdict("root cause found", Confidence.HIGH, emptyList())
 
         val report =
@@ -139,7 +200,15 @@ class InvestigationServiceTest {
         val saved = slot<Conversation>()
         every { conversationRepository.save(capture(saved)) } answers
             { saved.captured.copy(id = "conv-1") }
-        every { llmClient.investigate(any(), any(), any()) } returns
+        every { observationCollector.collect(any()) } returns
+            listOf(
+                Observation(
+                    SreTools.FIND_SERVICE_TRACES,
+                    CONFIRMING_TRACES,
+                    succeeded = true,
+                ),
+            )
+        every { llmClient.investigate(any(), any(), any(), any()) } returns
             LlmVerdict(
                 "checkout degraded",
                 Confidence.HIGH,
@@ -171,7 +240,7 @@ class InvestigationServiceTest {
         val saved = slot<Conversation>()
         every { conversationRepository.save(capture(saved)) } answers
             { saved.captured.copy(id = "conv-1") }
-        every { llmClient.investigate(any(), any(), any()) } throws
+        every { llmClient.investigate(any(), any(), any(), any()) } throws
             LlmInvocationException(
                 "openai unavailable",
                 RuntimeException("boom"),
@@ -196,7 +265,7 @@ class InvestigationServiceTest {
         val saved = slot<Conversation>()
         every { conversationRepository.save(capture(saved)) } answers
             { saved.captured.copy(id = "conv-1") }
-        every { llmClient.investigate(any(), any(), any()) } returns
+        every { llmClient.investigate(any(), any(), any(), any()) } returns
             LlmVerdict("ok", Confidence.LOW, emptyList())
 
         service.investigate(
@@ -230,7 +299,7 @@ class InvestigationServiceTest {
         val history = slot<List<ConversationTurn>>()
         val saved = slot<Conversation>()
         every {
-            llmClient.investigate(any(), capture(history), any())
+            llmClient.investigate(any(), capture(history), any(), any())
         } returns LlmVerdict("still degraded", Confidence.LOW, emptyList())
         every { conversationRepository.save(capture(saved)) } answers
             { saved.captured }
@@ -252,13 +321,7 @@ class InvestigationServiceTest {
     @Test
     fun `reply caps the history at the configured maximum`() {
         val cappedService =
-            InvestigationService(
-                llmClient,
-                confidenceCalculator,
-                conversationRepository,
-                anchorWindowResolver,
-                AgentMemoryProperties(maxMessages = 1),
-            )
+            serviceWith(AgentMemoryProperties(maxMessages = 1))
         val stored =
             Conversation(
                 id = "conv-1",
@@ -273,7 +336,7 @@ class InvestigationServiceTest {
         every { conversationRepository.findById("conv-1") } returns stored
         val history = slot<List<ConversationTurn>>()
         every {
-            llmClient.investigate(any(), capture(history), any())
+            llmClient.investigate(any(), capture(history), any(), any())
         } returns LlmVerdict("ok", Confidence.LOW, emptyList())
         every { conversationRepository.save(any()) } answers
             { firstArg() }
@@ -310,7 +373,7 @@ class InvestigationServiceTest {
         val saved = slot<Conversation>()
         every { conversationRepository.save(capture(saved)) } answers
             { saved.captured }
-        every { llmClient.investigate(any(), any(), any()) } throws
+        every { llmClient.investigate(any(), any(), any(), any()) } throws
             LlmInvocationException(
                 "openai unavailable",
                 RuntimeException("boom"),
@@ -335,5 +398,7 @@ class InvestigationServiceTest {
 
     private companion object {
         val FIXED_NOW: Instant = Instant.parse("2026-07-08T10:00:00Z")
+
+        const val CONFIRMING_TRACES = """{"traces":[{"traceId":"abc"}]}"""
     }
 }

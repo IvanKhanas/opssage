@@ -15,11 +15,14 @@
  */
 package com.opssage.agent.llm
 
+import com.opssage.agent.model.Observation
+
 fun interface LlmClient {
 
     fun investigate(
         systemPrompt: String,
         history: List<ConversationTurn>,
         userInput: String,
+        observations: List<Observation>,
     ): LlmVerdict
 }

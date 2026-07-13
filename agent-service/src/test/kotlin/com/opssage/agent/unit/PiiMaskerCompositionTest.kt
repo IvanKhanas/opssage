@@ -36,6 +36,7 @@ class PiiMaskerCompositionTest {
             nameToken = "[NAME]",
             maskFullNames = false,
             sensitiveLabels = emptyList(),
+            operationalIdPrefixes = emptyList(),
         )
 
     private fun detector(vararg spans: PiiSpan): PiiDetector =

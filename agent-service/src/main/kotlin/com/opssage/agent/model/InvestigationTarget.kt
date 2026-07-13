@@ -13,26 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.agent.model
 
-import java.time.Clock
-
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
+data class InvestigationTarget(
+    val service: String,
+    val namespace: String,
 )
-class AgentConfig {
-
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
-}

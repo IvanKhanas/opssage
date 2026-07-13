@@ -15,17 +15,11 @@
  */
 package com.opssage.agent.config
 
-import com.opssage.agent.masking.MaskingToolCallback
-import com.opssage.agent.masking.PiiMasker
-import io.github.oshai.kotlinlogging.KotlinLogging
+import com.opssage.agent.masking.MaskedToolRegistry
 
 import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.tool.ToolCallback
-import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-
-private val log = KotlinLogging.logger {}
 
 @Configuration
 class ChatClientConfig {
@@ -33,20 +27,13 @@ class ChatClientConfig {
     @Bean
     fun chatClient(
         builder: ChatClient.Builder,
-        toolCallbackProviders: List<ToolCallbackProvider>,
-        piiMasker: PiiMasker,
-    ): ChatClient {
-        val maskedCallbacks: Array<ToolCallback> =
-            toolCallbackProviders
-                .flatMap { it.toolCallbacks.toList() }
-                .map { MaskingToolCallback(it, piiMasker) }
-                .toTypedArray()
-        log.atInfo {
-            message = "Wrapped MCP tool callbacks with PII masking"
-            payload = mapOf("count" to maskedCallbacks.size)
-        }
-        return builder
-            .defaultTools(maskedCallbacks)
+        registry: MaskedToolRegistry,
+    ): ChatClient =
+        builder
+            .defaultTools(*registry.callbacks.toTypedArray())
             .build()
-    }
+
+    @Bean
+    fun toolFreeChatClient(builder: ChatClient.Builder): ChatClient =
+        builder.build()
 }

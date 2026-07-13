@@ -18,24 +18,24 @@ package com.opssage.agent.llm
 import com.opssage.agent.config.LlmProperties
 import com.opssage.agent.masking.PiiMasker
 import com.opssage.agent.model.Confidence
+import com.opssage.agent.model.Observation
 import io.github.oshai.kotlinlogging.KotlinLogging
-import tools.jackson.databind.ObjectMapper
 
 import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.chat.messages.AssistantMessage
-import org.springframework.ai.chat.messages.Message
-import org.springframework.ai.chat.messages.UserMessage
 import org.springframework.ai.openai.OpenAiChatOptions
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClientException
 
 private val log = KotlinLogging.logger {}
 
 @Component
 class ChatClientLlmClient(
     private val chatClient: ChatClient,
-    private val mapper: ObjectMapper,
+    @Qualifier("toolFreeChatClient")
+    private val toolFreeChatClient: ChatClient,
     private val masker: PiiMasker,
+    private val historyMasker: HistoryMasker,
+    private val parser: LlmVerdictParser,
     private val properties: LlmProperties,
 ) : LlmClient {
 
@@ -43,6 +43,7 @@ class ChatClientLlmClient(
         systemPrompt: String,
         history: List<ConversationTurn>,
         userInput: String,
+        observations: List<Observation>,
     ): LlmVerdict {
         log.atInfo {
             message = "Dispatching investigation to external LLM"
@@ -50,72 +51,122 @@ class ChatClientLlmClient(
                 mapOf(
                     "inputChars" to userInput.length,
                     "historyTurns" to history.size,
+                    "observations" to observations.size,
                 )
         }
-        val content =
-            try {
-                chatClient
+        val findings = reason(systemPrompt, history, userInput, observations)
+        return finalize(findings, observations)
+    }
+
+    private fun reason(
+        systemPrompt: String,
+        history: List<ConversationTurn>,
+        userInput: String,
+        observations: List<Observation>,
+    ): String =
+        dispatch {
+            chatClient
+                .prompt()
+                .system(systemPrompt)
+                .messages(historyMasker.toMessages(history))
+                .user(masker.mask(userInput).text + render(observations))
+                .call()
+                .content()
+        }.orEmpty()
+
+    private fun render(observations: List<Observation>): String {
+        if (observations.isEmpty()) {
+            return ""
+        }
+        return observations.joinToString(
+            separator = "\n\n",
+            prefix = OBSERVATIONS_HEADER,
+        ) { observation ->
+            "### ${observation.tool}\n" +
+                observation.output.take(properties.observationMaxChars)
+        }
+    }
+
+    private fun finalize(
+        findings: String,
+        observations: List<Observation>,
+    ): LlmVerdict {
+        val draft =
+            dispatch {
+                toolFreeChatClient
                     .prompt()
-                    .system(systemPrompt)
-                    .messages(history.map { toMessage(it) })
-                    .user(masker.mask(userInput).text)
+                    .system(FINALIZE_SYSTEM)
+                    .user(finalizeInput(findings, observations))
                     .options(structuredOutputOptions())
                     .call()
                     .content()
-            } catch (ex: RestClientException) {
-                throw LlmInvocationException(
-                    "Failed to reach the external LLM",
-                    ex,
-                )
             }
-        return parseVerdict(content)
+        parser.parse(draft)?.let { return it }
+        return repair(draft)
     }
 
-    private fun parseVerdict(content: String?): LlmVerdict {
-        if (content.isNullOrBlank()) {
-            return EMPTY_VERDICT
-        }
-        return runCatching {
-            mapper.readValue(jsonObject(content), LlmVerdict::class.java)
-        }.getOrElse { error ->
-            log.atWarn {
-                message = "Model returned non-JSON investigation output"
-                payload = mapOf("outputChars" to content.length)
-                cause = error
+    private fun repair(draft: String?): LlmVerdict {
+        val repaired =
+            dispatch {
+                toolFreeChatClient
+                    .prompt()
+                    .system(FINALIZE_SYSTEM)
+                    .user(REPAIR_INSTRUCTION + draft.orEmpty())
+                    .options(structuredOutputOptions())
+                    .call()
+                    .content()
             }
-            LlmVerdict(
-                summary =
-                    content.trim().take(properties.fallbackSummaryMaxChars),
-                confidence = Confidence.LOW,
-                evidence = emptyList(),
-            )
-        }
+        return parser.parse(repaired) ?: fallback(draft)
     }
 
-    private fun jsonObject(content: String): String {
-        val start = content.indexOf('{')
-        val end = content.lastIndexOf('}')
-        require(start >= 0 && end > start) {
-            "Model output does not contain a JSON object"
+    private fun finalizeInput(
+        findings: String,
+        observations: List<Observation>,
+    ): String =
+        FINALIZE_INSTRUCTION +
+            "Промежуточный вывод модели:\n\n" +
+            masker.mask(findings).text +
+            render(observations)
+
+    private fun fallback(draft: String?): LlmVerdict {
+        log.atWarn {
+            message = "Falling back to low-confidence summary"
+            payload = mapOf("outputChars" to (draft?.length ?: 0))
         }
-        return content.substring(start, end + 1)
+        val summary =
+            draft
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?.take(properties.fallbackSummaryMaxChars)
+                ?: EMPTY_SUMMARY
+        return LlmVerdict(summary, Confidence.LOW, emptyList())
     }
 
-    private fun toMessage(turn: ConversationTurn): Message {
-        val masked = masker.mask(turn.content).text
-        return when (turn.role) {
-            TurnRole.USER -> UserMessage(masked)
-            TurnRole.ASSISTANT -> AssistantMessage(masked)
-        }
-    }
+    private fun dispatch(call: () -> String?): String? = LlmCalls.guarded(call)
 
     private companion object {
-        val EMPTY_VERDICT =
-            LlmVerdict(
-                summary = "Модель не вернула структурированный вывод.",
-                confidence = Confidence.LOW,
-                evidence = emptyList(),
-            )
+        const val EMPTY_SUMMARY = "Модель не вернула структурированный вывод."
+
+        val OBSERVATIONS_HEADER =
+            "\n\nСобранные данные (фиксированный план расследования):\n\n"
+
+        val FINALIZE_SYSTEM =
+            """
+            Ты оформляешь итог уже проведённого расследования в строгий
+            JSON по схеме (summary, confidence, evidence). Не вызывай
+            инструменты. Верни только JSON-объект без Markdown, префиксов
+            и пояснений вокруг. Уровень уверенности указывай только в поле
+            confidence: в тексте summary его называть нельзя, потому что
+            итоговое значение пересчитывается по собранным данным.
+            """.trimIndent()
+
+        val FINALIZE_INSTRUCTION =
+            "Сформируй итоговый JSON по данным расследования ниже.\n\n"
+
+        val REPAIR_INSTRUCTION =
+            "Предыдущий ответ не был валидным JSON по схеме. Верни ТОЛЬКО " +
+                "валидный JSON-объект (summary, confidence, evidence) без " +
+                "текста вокруг. Ответ для исправления:\n\n"
 
         fun structuredOutputOptions(): OpenAiChatOptions.Builder =
             OpenAiChatOptions

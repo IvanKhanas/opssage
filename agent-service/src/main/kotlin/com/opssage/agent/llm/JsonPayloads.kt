@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.agent.llm
 
-import java.time.Clock
+object JsonPayloads {
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
-)
-class AgentConfig {
-
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
+    fun extractObject(content: String?): String? {
+        if (content.isNullOrBlank()) {
+            return null
+        }
+        val start = content.indexOf('{')
+        val end = content.lastIndexOf('}')
+        if (start < 0 || end <= start) {
+            return null
+        }
+        return content.substring(start, end + 1)
+    }
 }

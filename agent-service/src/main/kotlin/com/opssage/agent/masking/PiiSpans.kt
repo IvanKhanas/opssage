@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.agent.masking
 
-import java.time.Clock
+object PiiSpans {
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
-)
-class AgentConfig {
-
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
+    fun resolveOverlaps(spans: List<PiiSpan>): List<PiiSpan> {
+        val ordered =
+            spans.sortedWith(
+                compareBy({ it.start }, { -(it.endExclusive - it.start) }),
+            )
+        val accepted = mutableListOf<PiiSpan>()
+        var coveredUpTo = -1
+        for (span in ordered) {
+            if (span.start >= coveredUpTo) {
+                accepted += span
+                coveredUpTo = span.endExclusive
+            }
+        }
+        return accepted
+    }
 }

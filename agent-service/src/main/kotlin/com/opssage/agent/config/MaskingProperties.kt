@@ -29,4 +29,5 @@ data class MaskingProperties(
     val nameToken: String,
     val maskFullNames: Boolean,
     val sensitiveLabels: List<String>,
+    val operationalIdPrefixes: List<String>,
 )

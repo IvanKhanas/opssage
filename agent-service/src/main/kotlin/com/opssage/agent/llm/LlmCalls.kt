@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.agent.llm
 
-import java.time.Clock
+import org.springframework.web.client.RestClientException
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+internal object LlmCalls {
 
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
-)
-class AgentConfig {
-
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
+    fun <T> guarded(call: () -> T): T =
+        try {
+            call()
+        } catch (ex: RestClientException) {
+            throw LlmInvocationException(
+                "Failed to reach the external LLM",
+                ex,
+            )
+        }
 }

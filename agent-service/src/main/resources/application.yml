@@ -31,6 +31,7 @@ agent:
     label-token: ${AGENT_MASKING_LABEL_TOKEN:[PII]}
     name-token: ${AGENT_MASKING_NAME_TOKEN:[NAME]}
     mask-full-names: ${AGENT_MASKING_FULL_NAMES:true}
+    operational-id-prefixes: ${AGENT_MASKING_OPERATIONAL_ID_PREFIXES:}
     sensitive-labels: ${AGENT_MASKING_SENSITIVE_LABELS:userId,user_id,userName,username,login,name,firstName,first_name,lastName,last_name,surname,middleName,patronymic,fullName,customer,customerName,client,clientName,passport,snils,inn,card,cardNumber,pan,secret,token,password,имя,фамилия,отчество,фио}
     ner:
       enabled: ${AGENT_MASKING_NER_ENABLED:false}
@@ -48,6 +49,11 @@ agent:
     forward-buffer: ${AGENT_WINDOW_FORWARD_BUFFER:5m}
   llm:
     fallback-summary-max-chars: ${AGENT_LLM_FALLBACK_SUMMARY_MAX_CHARS:4000}
+    observation-max-chars: ${AGENT_LLM_OBSERVATION_MAX_CHARS:6000}
+  sre:
+    namespace: ${AGENT_SRE_NAMESPACE:default}
+    catalog-ttl: ${AGENT_SRE_CATALOG_TTL:5m}
+    tool-concurrency: ${AGENT_SRE_TOOL_CONCURRENCY:6}
 
 server:
   port: ${SERVER_PORT:8081}

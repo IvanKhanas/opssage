@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.agent.playbook
 
-import java.time.Clock
+import com.opssage.agent.model.Observation
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+object AnalyticsPlans {
 
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
-)
-class AgentConfig {
+    const val MAX_SERVICES = 10
 
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
+    fun plan(
+        strategy: String,
+        services: List<String>,
+    ): List<Observation> =
+        listOf(
+            Observation(
+                "analyticsPlan",
+                "strategy=$strategy; services=${services.joinToString()}",
+                succeeded = true,
+            ),
+        )
 }

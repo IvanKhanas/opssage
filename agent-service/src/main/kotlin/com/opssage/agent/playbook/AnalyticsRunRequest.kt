@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.config
+package com.opssage.agent.playbook
 
-import java.time.Clock
+import com.opssage.agent.model.AnchorWindow
+import com.opssage.agent.model.InvestigationTarget
+import com.opssage.agent.model.InvestigationType
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
+data class AnalyticsRunRequest(
+    val scope: AnalyticsScope,
+    val window: AnchorWindow,
+    val prompt: AnalyticsPrompt,
 )
-class AgentConfig {
 
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
-}
+data class AnalyticsScope(
+    val type: InvestigationType,
+    val target: InvestigationTarget?,
+)
+
+data class AnalyticsPrompt(
+    val input: String,
+    val literal: String?,
+)

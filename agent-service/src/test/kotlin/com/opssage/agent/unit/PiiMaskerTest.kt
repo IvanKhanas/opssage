@@ -37,6 +37,7 @@ class PiiMaskerTest {
             nameToken = "[NAME]",
             maskFullNames = true,
             sensitiveLabels = listOf("userId", "firstName", "фамилия", "card"),
+            operationalIdPrefixes = emptyList(),
         )
 
     private val masker =

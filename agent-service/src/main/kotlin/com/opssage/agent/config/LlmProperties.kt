@@ -25,4 +25,6 @@ import org.springframework.validation.annotation.Validated
 data class LlmProperties(
     @field:Min(1)
     val fallbackSummaryMaxChars: Int,
+    @field:Min(1)
+    val observationMaxChars: Int,
 )

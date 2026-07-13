@@ -36,28 +36,12 @@ class PiiMasker(
         if (spans.isEmpty()) {
             return MaskingResult(text, masked = false)
         }
-        val result = applySpans(text, resolveOverlaps(spans))
+        val result = applySpans(text, PiiSpans.resolveOverlaps(spans))
         val masked = result != text
         if (masked) {
             log.debug { "Masked personal data before dispatch to external LLM" }
         }
         return MaskingResult(result, masked)
-    }
-
-    private fun resolveOverlaps(spans: List<PiiSpan>): List<PiiSpan> {
-        val ordered =
-            spans.sortedWith(
-                compareBy({ it.start }, { -(it.endExclusive - it.start) }),
-            )
-        val accepted = mutableListOf<PiiSpan>()
-        var coveredUpTo = -1
-        for (span in ordered) {
-            if (span.start >= coveredUpTo) {
-                accepted += span
-                coveredUpTo = span.endExclusive
-            }
-        }
-        return accepted
     }
 
     private fun applySpans(

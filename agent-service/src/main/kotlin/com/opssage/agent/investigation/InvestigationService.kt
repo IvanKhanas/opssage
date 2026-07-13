@@ -21,8 +21,10 @@ import com.opssage.agent.exception.InvestigationFailedException
 import com.opssage.agent.llm.ConversationTurn
 import com.opssage.agent.llm.LlmClient
 import com.opssage.agent.llm.LlmInvocationException
+import com.opssage.agent.model.AnchorWindow
 import com.opssage.agent.model.Conversation
 import com.opssage.agent.model.ConversationStatus
+import com.opssage.agent.model.Observation
 import com.opssage.agent.repository.ConversationRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -35,6 +37,8 @@ private val log = KotlinLogging.logger {}
 @Service
 class InvestigationService(
     private val llmClient: LlmClient,
+    private val observationCollector: ObservationCollector,
+    private val evidenceGuard: EvidenceGuard,
     private val confidenceCalculator: ConfidenceCalculator,
     private val conversationRepository: ConversationRepository,
     private val anchorWindowResolver: AnchorWindowResolver,
@@ -56,7 +60,13 @@ class InvestigationService(
             )
         val systemPrompt =
             SystemPrompts.promptFor(request.investigationType, window)
-        return runInvestigation(base, systemPrompt, emptyList(), request.input)
+        return runInvestigation(
+            base,
+            systemPrompt,
+            emptyList(),
+            request.input,
+            window,
+        )
     }
 
     fun reply(
@@ -76,7 +86,13 @@ class InvestigationService(
                 conversation.messages,
                 memoryProperties.maxMessages,
             )
-        return runInvestigation(conversation, systemPrompt, history, input)
+        return runInvestigation(
+            conversation,
+            systemPrompt,
+            history,
+            input,
+            window,
+        )
     }
 
     private fun runInvestigation(
@@ -84,10 +100,18 @@ class InvestigationService(
         systemPrompt: String,
         history: List<ConversationTurn>,
         input: String,
+        window: AnchorWindow,
     ): InvestigationReport {
+        val observations: List<Observation>
         val verdict =
             try {
-                llmClient.investigate(systemPrompt, history, input)
+                observations = collectObservations(base, history, input, window)
+                llmClient.investigate(
+                    systemPrompt,
+                    history,
+                    input,
+                    observations,
+                )
             } catch (ex: LlmInvocationException) {
                 persistFailure(base, input, ex)
                 throw InvestigationFailedException(
@@ -95,10 +119,20 @@ class InvestigationService(
                     ex,
                 )
             }
+        val grounded =
+            evidenceGuard.verify(
+                verdict,
+                GroundingContext(observations, window),
+            )
         val confidence =
             confidenceCalculator.reconcile(
-                verdict.confidence,
-                verdict.evidence.size,
+                ConfidenceInputs(
+                    type = base.investigationType,
+                    reported = verdict.confidence,
+                    evidenceCount = grounded.evidence.size,
+                    observations = observations,
+                    grounded = grounded.grounded,
+                ),
             )
 
         val saved =
@@ -109,9 +143,9 @@ class InvestigationService(
                         base.messages +
                             ConversationMessageFactory.userMessage(input) +
                             ConversationMessageFactory.assistantMessage(
-                                verdict.summary,
+                                grounded.summary,
                                 confidence,
-                                verdict.evidence,
+                                grounded.evidence,
                             ),
                     updatedAt = Instant.now(),
                 ),
@@ -128,7 +162,7 @@ class InvestigationService(
                     "conversationId" to savedId,
                     "type" to base.investigationType,
                     "confidence" to confidence,
-                    "evidence" to verdict.evidence.size,
+                    "evidence" to grounded.evidence.size,
                     "historyTurns" to history.size,
                 )
         }
@@ -136,11 +170,25 @@ class InvestigationService(
         return InvestigationReport(
             conversationId = savedId,
             investigationType = base.investigationType,
-            summary = verdict.summary,
+            summary = grounded.summary,
             confidence = confidence,
-            evidence = verdict.evidence,
+            evidence = grounded.evidence,
         )
     }
+
+    private fun collectObservations(
+        base: Conversation,
+        history: List<ConversationTurn>,
+        input: String,
+        window: AnchorWindow,
+    ): List<Observation> =
+        observationCollector.collect(
+            ObservationRequest(
+                type = base.investigationType,
+                prompt = ObservationPrompt(history, input),
+                window = window,
+            ),
+        )
 
     private fun persistFailure(
         base: Conversation,

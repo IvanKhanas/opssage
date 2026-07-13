@@ -81,5 +81,6 @@ class MaskingToolCallbackTest {
             nameToken = "[NAME]",
             maskFullNames = true,
             sensitiveLabels = listOf("userId", "firstName"),
+            operationalIdPrefixes = emptyList(),
         )
 }

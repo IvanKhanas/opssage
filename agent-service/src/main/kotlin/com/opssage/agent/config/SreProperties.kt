@@ -15,24 +15,20 @@
  */
 package com.opssage.agent.config
 
-import java.time.Clock
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import java.time.Duration
 
-@Configuration
-@EnableConfigurationProperties(
-    AgentMemoryProperties::class,
-    MaskingProperties::class,
-    NerProperties::class,
-    ConfidenceProperties::class,
-    WindowProperties::class,
-    LlmProperties::class,
-    SreProperties::class,
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.validation.annotation.Validated
+
+@Validated
+@ConfigurationProperties("agent.sre")
+data class SreProperties(
+    @field:NotBlank
+    val namespace: String,
+    val catalogTtl: Duration,
+    @field:Min(1)
+    val toolConcurrency: Int = 6,
 )
-class AgentConfig {
-
-    @Bean
-    fun clock(): Clock = Clock.systemUTC()
-}
