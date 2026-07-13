@@ -34,7 +34,7 @@ class MaskedToolRegistry(
     val callbacks: List<ToolCallback> =
         toolCallbackProviders
             .flatMap { it.toolCallbacks.toList() }
-            .filterNot { policy.isWriteTool(it.toolDefinition.name()) }
+            .filter { policy.isReadTool(it.toolDefinition.name()) }
             .map { MaskingToolCallback(it, piiMasker) }
 
     private val byName: Map<String, ToolCallback> =
@@ -46,7 +46,7 @@ class MaskedToolRegistry(
             payload =
                 mapOf(
                     "count" to callbacks.size,
-                    "excludedWriteTools" to policy.writeTools,
+                    "allowedReadTools" to policy.readTools,
                 )
         }
     }

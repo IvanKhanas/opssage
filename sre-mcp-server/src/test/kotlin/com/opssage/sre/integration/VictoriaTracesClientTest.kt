@@ -152,6 +152,20 @@ class VictoriaTracesClientTest {
     }
 
     @Test
+    fun `requests bounded candidate traces before namespace filtering`() {
+        stubTraces(TRACES_BODY)
+
+        client
+            .findServiceTraces("deposit-service", "banking", WINDOW, 20)
+            .block()
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/select/jaeger/api/traces"))
+                .withQueryParam("limit", equalTo("100")),
+        )
+    }
+
+    @Test
     fun `drops traces recorded in another namespace`() {
         stubTraces(OTHER_NAMESPACE_BODY)
 

@@ -15,14 +15,12 @@
  */
 package com.opssage.agent.playbook
 
-import com.opssage.agent.config.AgentDispatchers
-import com.opssage.agent.config.SreProperties
+import com.opssage.agent.config.ToolExecutionRuntime
 import com.opssage.agent.masking.MaskedToolRegistry
 import com.opssage.agent.model.Observation
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.ObjectMapper
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
@@ -37,23 +35,20 @@ private val log = KotlinLogging.logger {}
 class ToolStepExecutor(
     private val registry: MaskedToolRegistry,
     private val mapper: ObjectMapper,
-    private val properties: SreProperties,
-    private val dispatcher: CoroutineDispatcher = AgentDispatchers.mcpBlocking,
+    private val runtime: ToolExecutionRuntime,
 ) {
-
-    private val globalGate = Semaphore(properties.maxInFlightToolCalls)
 
     fun execute(steps: List<ToolStep>): List<Observation> {
         if (steps.isEmpty()) {
             return emptyList()
         }
-        val investigationGate = Semaphore(properties.toolConcurrency)
+        val investigationGate = Semaphore(runtime.toolConcurrency)
         return runBlocking {
             steps
                 .map { step ->
-                    async(dispatcher) {
+                    async(runtime.dispatcher) {
                         investigationGate.withPermit {
-                            globalGate.withPermit { observe(step) }
+                            runtime.globalGate.withPermit { observe(step) }
                         }
                     }
                 }.awaitAll()

@@ -19,11 +19,39 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("agent.tools")
 data class ToolPolicyProperties(
-    val writeTools: List<String>,
+    val readTools: List<String> = DEFAULT_READ_TOOLS,
 ) {
 
-    fun isWriteTool(toolName: String): Boolean =
-        writeTools.any { name ->
+    fun isReadTool(toolName: String): Boolean =
+        readTools.any { name ->
             toolName == name || toolName.endsWith("_$name")
         }
+
+    private companion object {
+        val DEFAULT_READ_TOOLS =
+            listOf(
+                "listServices",
+                "getServiceHealth",
+                "compareServiceBeforeAfterRollout",
+                "getDependencyImpact",
+                "findTopLogErrors",
+                "findLogErrorsByText",
+                "findServiceTraces",
+                "findUserRelatedTraces",
+                "summarizeTrace",
+                "getServiceCorrectness",
+                "getAlertContext",
+                "getKubernetesServiceEvents",
+                "readDocumentation",
+                "validateTelemetryContract",
+                "getFactsForService",
+                "searchFacts",
+                "getRunbooksForService",
+                "getRunbooksByAlert",
+                "getServiceProfile",
+                "getKnownIncidentsForService",
+                "searchKnownIncidents",
+                "getIncidentsInvolvingService",
+            )
+    }
 }

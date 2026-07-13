@@ -15,13 +15,20 @@
  */
 package com.opssage.agent.config
 
-import java.util.concurrent.Executors
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Semaphore
 
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.stereotype.Component
 
-object AgentDispatchers {
+@Component
+class ToolExecutionRuntime(
+    properties: SreProperties,
+    @param:Qualifier("mcpBlockingDispatcher")
+    val dispatcher: CoroutineDispatcher,
+) {
 
-    val mcpBlocking: ExecutorCoroutineDispatcher =
-        Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+    val toolConcurrency: Int = properties.toolConcurrency
+
+    val globalGate: Semaphore = Semaphore(properties.maxInFlightToolCalls)
 }

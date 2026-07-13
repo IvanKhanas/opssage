@@ -16,6 +16,7 @@
 package com.opssage.agent.unit
 
 import com.opssage.agent.config.SreProperties
+import com.opssage.agent.config.ToolExecutionRuntime
 import com.opssage.agent.masking.MaskedToolRegistry
 import com.opssage.agent.playbook.ToolStep
 import com.opssage.agent.playbook.ToolStepExecutor
@@ -34,6 +35,8 @@ import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+import kotlinx.coroutines.Dispatchers
+
 @ExtendWith(MockKExtension::class)
 class ToolStepExecutorTest {
 
@@ -44,7 +47,10 @@ class ToolStepExecutorTest {
         ToolStepExecutor(
             registry,
             jacksonObjectMapper(),
-            SreProperties("checkout", Duration.ofMinutes(5)),
+            ToolExecutionRuntime(
+                SreProperties("checkout", Duration.ofMinutes(5)),
+                Dispatchers.Default,
+            ),
         )
     }
 
@@ -126,13 +132,18 @@ class ToolStepExecutorTest {
             val first = pool.submit(Callable { executor.execute(steps) })
             val second = pool.submit(Callable { executor.execute(steps) })
 
-            assertThat(first.get(10, TimeUnit.SECONDS)).allMatch { it.succeeded }
-            assertThat(second.get(10, TimeUnit.SECONDS)).allMatch { it.succeeded }
+            assertThat(first.get(10, TimeUnit.SECONDS))
+                .allMatch { it.succeeded }
+            assertThat(second.get(10, TimeUnit.SECONDS))
+                .allMatch { it.succeeded }
         } finally {
             pool.shutdownNow()
         }
     }
 
     private fun step(tool: String): ToolStep =
-        ToolStep(tool, mapOf("service" to "checkout"))
+        ToolStep(
+            tool,
+            mapOf("service" to "checkout"),
+        )
 }

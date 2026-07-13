@@ -16,6 +16,10 @@
 package com.opssage.agent.config
 
 import java.time.Clock
+import java.util.concurrent.Executors
+
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -36,4 +40,8 @@ class AgentConfig {
 
     @Bean
     fun clock(): Clock = Clock.systemUTC()
+
+    @Bean(destroyMethod = "close")
+    fun mcpBlockingDispatcher(): ExecutorCoroutineDispatcher =
+        Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
 }

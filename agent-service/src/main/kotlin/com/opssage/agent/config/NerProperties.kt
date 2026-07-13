@@ -15,13 +15,18 @@
  */
 package com.opssage.agent.config
 
-import org.springframework.boot.context.properties.ConfigurationProperties
+import jakarta.validation.constraints.Min
 
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.validation.annotation.Validated
+
+@Validated
 @ConfigurationProperties("agent.masking.ner")
 data class NerProperties(
     val enabled: Boolean,
     val modelPath: String,
     val scoreThreshold: Double,
     val entityTokens: Map<String, String>,
+    @field:Min(1)
     val maxConcurrentInferences: Int,
 )

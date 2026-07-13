@@ -31,17 +31,10 @@ import org.springframework.ai.tool.definition.ToolDefinition
 
 class MaskedToolRegistryTest {
 
-    private val policy =
-        ToolPolicyProperties(
-            listOf(
-                "proposeInvestigationFact",
-                "saveInvestigationSummary",
-                "proposeNewSkill",
-            ),
-        )
+    private val policy = ToolPolicyProperties()
 
     @Test
-    fun `keeps read tools and drops write tools`() {
+    fun `keeps configured read tools and drops write tools`() {
         val registry =
             registryOf(
                 "searchFacts",
@@ -59,11 +52,27 @@ class MaskedToolRegistryTest {
     @ParameterizedTest
     @ValueSource(
         strings = [
-            "proposeNewSkill",
-            "knowledge_proposeNewSkill",
+            "searchFacts",
+            "knowledge_searchFacts",
         ],
     )
-    fun `drops a write tool even when the client prefixes its name`(
+    fun `keeps a read tool even when the client prefixes its name`(
+        toolName: String,
+    ) {
+        val registry = registryOf(toolName)
+
+        assertThat(registry.contains(toolName)).isTrue()
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "proposeNewSkill",
+            "knowledge_proposeNewSkill",
+            "unknownClusterMutation",
+        ],
+    )
+    fun `drops every tool that is not explicitly read allowed`(
         toolName: String,
     ) {
         val registry = registryOf(toolName)

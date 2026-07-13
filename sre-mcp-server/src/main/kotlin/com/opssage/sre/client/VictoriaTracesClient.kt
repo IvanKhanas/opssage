@@ -113,8 +113,10 @@ class VictoriaTracesClient(
                 }
             }
 
-    private fun candidateLimit(limit: Int): Int =
-        limit * traces.searchCandidateMultiplier
+    private fun candidateLimit(limit: Int): Int {
+        val candidates = limit.toLong() * traces.searchCandidateMultiplier
+        return candidates.coerceAtMost(MAX_CANDIDATE_TRACES).toInt()
+    }
 
     private fun userTag(userId: String): String =
         mapper.writeValueAsString(mapOf(traces.userTag to userId))
@@ -172,6 +174,7 @@ class VictoriaTracesClient(
     private companion object {
         const val CHILD_OF = "CHILD_OF"
         const val MICROS_PER_MILLI = 1000L
+        const val MAX_CANDIDATE_TRACES = 50_000L
         const val TAGS_VARIABLE = "tagsFilter"
         const val TAGS_TEMPLATE = "{$TAGS_VARIABLE}"
         val NON_ERROR_VALUES = setOf("false", "0", "unset", "ok")
