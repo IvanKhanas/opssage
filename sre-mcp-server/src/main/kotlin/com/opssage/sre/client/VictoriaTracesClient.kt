@@ -62,7 +62,7 @@ class VictoriaTracesClient(
                     .queryParam("service", service)
                     .queryParam("start", micros(window.from))
                     .queryParam("end", micros(window.to))
-                    .queryParam("limit", limit)
+                    .queryParam("limit", candidateLimit(limit))
                 if (userId.isBlank()) {
                     return@uri builder.build()
                 }
@@ -74,6 +74,7 @@ class VictoriaTracesClient(
             .map { response ->
                 response.data
                     .filter { belongsTo(it, namespace) }
+                    .take(limit)
                     .map(::toTrace)
             }.doOnError { error ->
                 log.atWarn {
@@ -112,6 +113,9 @@ class VictoriaTracesClient(
                 }
             }
 
+    private fun candidateLimit(limit: Int): Int =
+        limit * traces.searchCandidateMultiplier
+
     private fun userTag(userId: String): String =
         mapper.writeValueAsString(mapOf(traces.userTag to userId))
 
@@ -119,11 +123,16 @@ class VictoriaTracesClient(
         trace: JaegerTrace,
         namespace: String,
     ): Boolean =
-        trace.processes.values.any { process ->
-            process.tags.any { tag ->
-                tag.key == traces.namespaceTag &&
-                    tag.value?.toString() == namespace
-            }
+        hasNamespace(trace.processes.values.flatMap { it.tags }, namespace) ||
+            hasNamespace(trace.spans.flatMap { it.tags }, namespace)
+
+    private fun hasNamespace(
+        tags: List<JaegerTag>,
+        namespace: String,
+    ): Boolean =
+        tags.any { tag ->
+            tag.key == traces.namespaceTag &&
+                tag.value?.toString() == namespace
         }
 
     private fun micros(instant: Instant): Long =

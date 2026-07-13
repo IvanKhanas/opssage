@@ -24,4 +24,5 @@ data class TracesProperties(
     val userTag: String,
     val namespaceTag: String,
     val errorTag: String,
+    val searchCandidateMultiplier: Int,
 )

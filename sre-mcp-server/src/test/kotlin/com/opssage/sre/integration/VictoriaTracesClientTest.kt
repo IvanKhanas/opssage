@@ -106,6 +106,19 @@ class VictoriaTracesClientTest {
     }
 
     @Test
+    fun `keeps traces with namespace recorded on spans`() {
+        stubTraces(SPAN_NAMESPACE_BODY)
+
+        val traces =
+            client
+                .findServiceTraces("deposit-service", "banking", WINDOW, 20)
+                .block()!!
+
+        assertThat(traces).hasSize(1)
+        assertThat(traces[0].traceId).isEqualTo("t3")
+    }
+
+    @Test
     fun `never sends the namespace as a jaeger span tag filter`() {
         stubTraces(TRACES_BODY)
 
@@ -170,17 +183,155 @@ class VictoriaTracesClientTest {
                 Instant.parse("2026-06-27T11:00:00Z"),
             )
 
-        const val BANKING_PROCESSES =
-            """{"p1":{"serviceName":"gateway","tags":[{"key":"namespace","value":"banking"}]},"p2":{"serviceName":"deposit-service","tags":[{"key":"namespace","value":"banking"}]}}"""
+        val BANKING_PROCESSES =
+            """
+            {
+              "p1": {
+                "serviceName": "gateway",
+                "tags": [
+                  {
+                    "key": "namespace",
+                    "value": "banking"
+                  }
+                ]
+              },
+              "p2": {
+                "serviceName": "deposit-service",
+                "tags": [
+                  {
+                    "key": "namespace",
+                    "value": "banking"
+                  }
+                ]
+              }
+            }
+            """.trimIndent()
 
-        const val SPANS =
-            """[{"spanID":"s1","operationName":"GET /pay","references":[],"startTime":1000000,"duration":500000,"tags":[{"key":"error","value":"unset"}],"processID":"p1"},{"spanID":"s2","operationName":"charge","references":[{"refType":"CHILD_OF","spanID":"s1"}],"startTime":1100000,"duration":300000,"tags":[{"key":"error","value":true}],"processID":"p2"}]"""
+        val SPANS =
+            """
+            [
+              {
+                "spanID": "s1",
+                "operationName": "GET /pay",
+                "references": [],
+                "startTime": 1000000,
+                "duration": 500000,
+                "tags": [
+                  {
+                    "key": "error",
+                    "value": "unset"
+                  }
+                ],
+                "processID": "p1"
+              },
+              {
+                "spanID": "s2",
+                "operationName": "charge",
+                "references": [
+                  {
+                    "refType": "CHILD_OF",
+                    "spanID": "s1"
+                  }
+                ],
+                "startTime": 1100000,
+                "duration": 300000,
+                "tags": [
+                  {
+                    "key": "error",
+                    "value": true
+                  }
+                ],
+                "processID": "p2"
+              }
+            ]
+            """.trimIndent()
 
         val TRACES_BODY =
-            """{"data":[{"traceID":"t1","spans":$SPANS,"processes":$BANKING_PROCESSES}]}"""
+            """
+            {
+              "data": [
+                {
+                  "traceID": "t1",
+                  "spans": $SPANS,
+                  "processes": $BANKING_PROCESSES
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val SPAN_NAMESPACE_SPANS =
+            """
+            [
+              {
+                "spanID": "s1",
+                "operationName": "GET /pay",
+                "references": [],
+                "startTime": 1000000,
+                "duration": 500000,
+                "tags": [
+                  {
+                    "key": "namespace",
+                    "value": "banking"
+                  },
+                  {
+                    "key": "error",
+                    "value": "unset"
+                  }
+                ],
+                "processID": "p1"
+              }
+            ]
+            """.trimIndent()
+
+        val SPAN_NAMESPACE_BODY =
+            """
+            {
+              "data": [
+                {
+                  "traceID": "t3",
+                  "spans": $SPAN_NAMESPACE_SPANS,
+                  "processes": {
+                    "p1": {
+                      "serviceName": "deposit-service",
+                      "tags": []
+                    }
+                  }
+                }
+              ]
+            }
+            """.trimIndent()
 
         val OTHER_NAMESPACE_BODY =
-            """{"data":[{"traceID":"t2","spans":$SPANS,"processes":{"p1":{"serviceName":"gateway","tags":[{"key":"namespace","value":"sandbox"}]},"p2":{"serviceName":"deposit-service","tags":[{"key":"namespace","value":"sandbox"}]}}}]}"""
+            """
+            {
+              "data": [
+                {
+                  "traceID": "t2",
+                  "spans": $SPANS,
+                  "processes": {
+                    "p1": {
+                      "serviceName": "gateway",
+                      "tags": [
+                        {
+                          "key": "namespace",
+                          "value": "sandbox"
+                        }
+                      ]
+                    },
+                    "p2": {
+                      "serviceName": "deposit-service",
+                      "tags": [
+                        {
+                          "key": "namespace",
+                          "value": "sandbox"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+            """.trimIndent()
 
         @JvmStatic
         @BeforeAll
