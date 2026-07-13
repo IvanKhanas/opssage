@@ -9,4 +9,5 @@ repositories {
 
 dependencies {
     implementation(libs.plugins.spotless.map { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" })
+    implementation(libs.plugins.kover.map { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" })
 }

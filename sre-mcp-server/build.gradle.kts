@@ -1,7 +1,6 @@
 plugins {
     java
-    jacoco
-    id("opssage.jacoco-conventions")
+    id("opssage.kover-conventions")
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
@@ -12,14 +11,14 @@ tasks.test {
     jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
 
-tasks.withType<org.gradle.testing.jacoco.tasks.JacocoReport>().configureEach {
-    classDirectories.setFrom(
-        files(
-            classDirectories.files.map {
-                fileTree(it).exclude("**/SreMcpServerAppKt.class")
-            },
-        ),
-    )
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("*SreMcpServerAppKt")
+            }
+        }
+    }
 }
 
 dependencies {

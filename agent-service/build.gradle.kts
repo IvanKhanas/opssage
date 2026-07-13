@@ -1,7 +1,6 @@
 plugins {
     java
-    jacoco
-    id("opssage.jacoco-conventions")
+    id("opssage.kover-conventions")
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
@@ -12,33 +11,18 @@ tasks.test {
     jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
 
-val jacocoExcludes =
-    listOf(
-        "**/AgentServiceAppKt.class",
-        "**/masking/OnnxNerPiiDetector.class",
-    )
-
-tasks.withType<org.gradle.testing.jacoco.tasks.JacocoReport>().configureEach {
-    classDirectories.setFrom(
-        files(
-            classDirectories.files.map {
-                fileTree(it).exclude(jacocoExcludes)
-            },
-        ),
-    )
-}
-
-tasks
-    .withType<org.gradle.testing.jacoco.tasks.JacocoCoverageVerification>()
-    .configureEach {
-        classDirectories.setFrom(
-            files(
-                classDirectories.files.map {
-                    fileTree(it).exclude(jacocoExcludes)
-                },
-            ),
-        )
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*AgentServiceAppKt",
+                    "com.opssage.agent.masking.OnnxNerPiiDetector",
+                )
+            }
+        }
     }
+}
 
 dependencies {
     implementation(platform(libs.spring.boot.bom))
