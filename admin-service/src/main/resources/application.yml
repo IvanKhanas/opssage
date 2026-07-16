@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: admin-service
+  mongodb:
+    uri: ${ADMIN_MONGODB_URI:mongodb://localhost:27017/opssage-admin}
+  data:
+    mongodb:
+      auto-index-creation: ${ADMIN_MONGODB_AUTO_INDEX:true}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${ADMIN_KAFKA_GROUP_ID:admin-service}
+      auto-offset-reset: ${ADMIN_KAFKA_AUTO_OFFSET_RESET:earliest}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+
+admin:
+  auth:
+    jwt:
+      secret: ${ADMIN_AUTH_JWT_SECRET:}
+      access-ttl: ${ADMIN_AUTH_ACCESS_TTL:15m}
+    refresh:
+      ttl: ${ADMIN_AUTH_REFRESH_TTL:30d}
+    cookies:
+      access-name: ${ADMIN_AUTH_ACCESS_COOKIE:opssage_access}
+      refresh-name: ${ADMIN_AUTH_REFRESH_COOKIE:opssage_refresh}
+      secure: ${ADMIN_AUTH_COOKIE_SECURE:true}
+  kafka:
+    topics:
+      investigations:
+        investigation-requests-topic: ${ADMIN_INVESTIGATION_REQUESTS_TOPIC:opssage.investigation.requests}
+        investigation-results-topic: ${ADMIN_INVESTIGATION_RESULTS_TOPIC:opssage.investigation.results}
+      messages:
+        investigation-messages-topic: ${ADMIN_INVESTIGATION_MESSAGES_TOPIC:opssage.investigation.messages}
+        investigation-message-results-topic: ${ADMIN_INVESTIGATION_MESSAGE_RESULTS_TOPIC:opssage.investigation.message.results}
+    dlq:
+      investigation-results-topic: ${ADMIN_INVESTIGATION_RESULTS_DLQ_TOPIC:opssage.investigation.results.dlq}
+      investigation-message-results-topic: ${ADMIN_INVESTIGATION_MESSAGE_RESULTS_DLQ_TOPIC:opssage.investigation.message.results.dlq}
+  outbox:
+    scheduler-interval: ${ADMIN_OUTBOX_SCHEDULER_INTERVAL:5s}
+    batch-size: ${ADMIN_OUTBOX_BATCH_SIZE:100}
+    retry:
+      max-attempts: ${ADMIN_OUTBOX_MAX_ATTEMPTS:10}
+      retry-delay: ${ADMIN_OUTBOX_RETRY_DELAY:30s}
+    publishing:
+      lease-duration: ${ADMIN_OUTBOX_LEASE_DURATION:2m}
+      send-timeout: ${ADMIN_KAFKA_SEND_TIMEOUT:5s}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
