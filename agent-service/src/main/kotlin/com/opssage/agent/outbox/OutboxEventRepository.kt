@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.outbox
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+import java.time.Duration
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+interface OutboxEventRepository {
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
+    fun claimPending(
+        limit: Int,
+        leaseDuration: Duration,
+    ): List<OutboxEvent>
+
+    fun save(event: OutboxEvent): OutboxEvent
+
+    fun saveAll(events: List<OutboxEvent>): List<OutboxEvent>
 }

@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.messaging
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.stereotype.Repository
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+@Repository
+class MongoProcessedMessageRepository(
+    private val data: ProcessedMessageMongoRepository,
+) : ProcessedMessageRepository {
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
+    override fun existsById(id: String): Boolean = data.existsById(id)
+
+    override fun insert(message: ProcessedMessage): ProcessedMessage =
+        data.insert(message)
 }

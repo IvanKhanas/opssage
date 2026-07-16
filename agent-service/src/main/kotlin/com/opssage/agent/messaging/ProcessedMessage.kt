@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.messaging
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+import java.time.Instant
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.Indexed
+import org.springframework.data.mongodb.core.mapping.Document
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
-}
+const val PROCESSED_MESSAGE_TTL_SECONDS: Int = 604_800
+
+@Document("processed_messages")
+data class ProcessedMessage(
+    @Id
+    val id: String,
+    @Indexed(expireAfterSeconds = PROCESSED_MESSAGE_TTL_SECONDS)
+    val processedAt: Instant,
+)

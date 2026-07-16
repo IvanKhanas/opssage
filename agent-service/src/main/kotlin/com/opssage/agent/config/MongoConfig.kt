@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.config
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.data.mongodb.MongoDatabaseFactory
+import org.springframework.data.mongodb.MongoTransactionManager
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+@Configuration
+class MongoConfig {
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
+    @Bean
+    fun transactionManager(
+        factory: MongoDatabaseFactory,
+    ): MongoTransactionManager = MongoTransactionManager(factory)
 }

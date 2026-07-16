@@ -15,15 +15,15 @@
  */
 package com.opssage.agent.testcontainers
 
-import com.opssage.agent.model.Conversation
-import com.opssage.agent.model.InvestigationType
-import com.opssage.agent.repository.ConversationRepository
+import com.opssage.agent.messaging.IdempotencyGuard
+import com.opssage.agent.messaging.ProcessedMessage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
@@ -35,7 +35,7 @@ import org.springframework.test.context.DynamicPropertySource
         "spring.kafka.listener.auto-startup=false",
     ],
 )
-class MongoConversationRepositoryTest {
+class IdempotencyGuardTest {
 
     companion object {
         @JvmStatic
@@ -45,49 +45,19 @@ class MongoConversationRepositoryTest {
     }
 
     @Autowired
-    lateinit var repository: ConversationRepository
+    lateinit var guard: IdempotencyGuard
+
+    @Autowired
+    lateinit var mongo: MongoTemplate
 
     @BeforeEach
     fun cleanUp() {
-        repository.findAll().forEach { repository.deleteById(it.id!!) }
+        mongo.dropCollection(ProcessedMessage::class.java)
     }
 
     @Test
-    fun `saves and reads back a conversation by id`() {
-        val saved =
-            repository.save(
-                Conversation(
-                    title = "checkout latency",
-                    investigationType =
-                        InvestigationType.ALERT_INVESTIGATION,
-                ),
-            )
-
-        val found = repository.findById(saved.id!!)
-
-        assertThat(found).isNotNull
-        assertThat(found!!.title).isEqualTo("checkout latency")
-        assertThat(found.investigationType)
-            .isEqualTo(InvestigationType.ALERT_INVESTIGATION)
-    }
-
-    @Test
-    fun `returns null for a missing conversation`() {
-        assertThat(repository.findById("missing")).isNull()
-    }
-
-    @Test
-    fun `assigns an optimistic-lock version on first save`() {
-        val saved =
-            repository.save(
-                Conversation(
-                    title = "rollout health",
-                    investigationType =
-                        InvestigationType.ROLLOUT_HEALTH_CHECK,
-                ),
-            )
-
-        assertThat(saved.id).isNotNull()
-        assertThat(saved.version).isEqualTo(0L)
+    fun `try start returns false for duplicate key`() {
+        assertThat(guard.tryStart("investigation:req-1")).isTrue()
+        assertThat(guard.tryStart("investigation:req-1")).isFalse()
     }
 }

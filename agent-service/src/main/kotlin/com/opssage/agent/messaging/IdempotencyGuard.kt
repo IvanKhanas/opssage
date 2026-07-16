@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.messaging
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+import java.time.Clock
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+import org.springframework.dao.DuplicateKeyException
+import org.springframework.stereotype.Component
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
+@Component
+class IdempotencyGuard(
+    private val repository: ProcessedMessageRepository,
+    private val clock: Clock,
+) {
+
+    fun tryStart(key: String): Boolean =
+        try {
+            repository.insert(
+                ProcessedMessage(id = key, processedAt = clock.instant()),
+            )
+            true
+        } catch (ignored: DuplicateKeyException) {
+            false
+        }
 }

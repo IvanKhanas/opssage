@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.config
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+import java.time.Duration
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
-}
+@ConfigurationProperties("agent.outbox")
+data class OutboxProperties(
+    val batchSize: Int,
+    val retry: OutboxRetryProperties,
+    val publishing: OutboxPublishingProperties,
+)
+
+data class OutboxRetryProperties(
+    val maxAttempts: Int,
+    val retryDelay: Duration,
+)
+
+data class OutboxPublishingProperties(
+    val leaseDuration: Duration,
+    val sendTimeout: Duration,
+)

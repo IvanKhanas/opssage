@@ -6,6 +6,17 @@ spring:
       enabled: ${AGENT_VIRTUAL_THREADS_ENABLED:true}
   mongodb:
     uri: ${AGENT_MONGODB_URI:mongodb://localhost:27017/opssage-agent}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      group-id: ${AGENT_KAFKA_GROUP_ID:agent-service}
+      auto-offset-reset: ${AGENT_KAFKA_AUTO_OFFSET_RESET:earliest}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:}
@@ -61,6 +72,26 @@ agent:
     catalog-ttl: ${AGENT_SRE_CATALOG_TTL:5m}
     tool-concurrency: ${AGENT_SRE_TOOL_CONCURRENCY:6}
     max-in-flight-tool-calls: ${AGENT_SRE_MAX_INFLIGHT_TOOL_CALLS:32}
+  kafka:
+    topics:
+      investigations:
+        investigation-requests-topic: ${AGENT_INVESTIGATION_REQUESTS_TOPIC:opssage.investigation.requests}
+        investigation-results-topic: ${AGENT_INVESTIGATION_RESULTS_TOPIC:opssage.investigation.results}
+      messages:
+        investigation-messages-topic: ${AGENT_INVESTIGATION_MESSAGES_TOPIC:opssage.investigation.messages}
+        investigation-message-results-topic: ${AGENT_INVESTIGATION_MESSAGE_RESULTS_TOPIC:opssage.investigation.message.results}
+    dlq:
+      investigation-requests-topic: ${AGENT_INVESTIGATION_REQUESTS_DLQ_TOPIC:opssage.investigation.requests.dlq}
+      investigation-messages-topic: ${AGENT_INVESTIGATION_MESSAGES_DLQ_TOPIC:opssage.investigation.messages.dlq}
+  outbox:
+    scheduler-interval: ${AGENT_OUTBOX_SCHEDULER_INTERVAL:5s}
+    batch-size: ${AGENT_OUTBOX_BATCH_SIZE:100}
+    retry:
+      max-attempts: ${AGENT_OUTBOX_MAX_ATTEMPTS:10}
+      retry-delay: ${AGENT_OUTBOX_RETRY_DELAY:30s}
+    publishing:
+      lease-duration: ${AGENT_OUTBOX_LEASE_DURATION:2m}
+      send-timeout: ${AGENT_KAFKA_SEND_TIMEOUT:5s}
 
 server:
   port: ${SERVER_PORT:8081}

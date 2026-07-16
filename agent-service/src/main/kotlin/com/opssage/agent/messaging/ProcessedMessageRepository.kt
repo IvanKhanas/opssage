@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent
+package com.opssage.agent.messaging
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-import org.springframework.kafka.annotation.EnableKafka
-import org.springframework.scheduling.annotation.EnableScheduling
+interface ProcessedMessageRepository {
 
-@SpringBootApplication
-@EnableKafka
-@EnableScheduling
-class AgentServiceApp
+    fun existsById(id: String): Boolean
 
-fun main(args: Array<String>) {
-    runApplication<AgentServiceApp>(*args)
+    fun insert(message: ProcessedMessage): ProcessedMessage
 }

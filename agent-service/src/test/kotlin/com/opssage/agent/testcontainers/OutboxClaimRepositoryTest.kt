@@ -15,15 +15,20 @@
  */
 package com.opssage.agent.testcontainers
 
-import com.opssage.agent.model.Conversation
-import com.opssage.agent.model.InvestigationType
-import com.opssage.agent.repository.ConversationRepository
+import com.opssage.agent.outbox.OutboxDestination
+import com.opssage.agent.outbox.OutboxEvent
+import com.opssage.agent.outbox.OutboxEventRepository
+import com.opssage.agent.outbox.OutboxMessage
+import com.opssage.agent.outbox.OutboxStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
+import java.time.Duration
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
@@ -35,7 +40,7 @@ import org.springframework.test.context.DynamicPropertySource
         "spring.kafka.listener.auto-startup=false",
     ],
 )
-class MongoConversationRepositoryTest {
+class OutboxClaimRepositoryTest {
 
     companion object {
         @JvmStatic
@@ -45,49 +50,44 @@ class MongoConversationRepositoryTest {
     }
 
     @Autowired
-    lateinit var repository: ConversationRepository
+    lateinit var repository: OutboxEventRepository
+
+    @Autowired
+    lateinit var mongo: MongoTemplate
 
     @BeforeEach
     fun cleanUp() {
-        repository.findAll().forEach { repository.deleteById(it.id!!) }
+        mongo.dropCollection(OutboxEvent::class.java)
     }
 
     @Test
-    fun `saves and reads back a conversation by id`() {
-        val saved =
-            repository.save(
-                Conversation(
-                    title = "checkout latency",
-                    investigationType =
-                        InvestigationType.ALERT_INVESTIGATION,
+    fun `claim marks event in progress and hides it from second claim`() {
+        repository.save(event())
+
+        val first = repository.claimPending(1, Duration.ofMinutes(2))
+        val second = repository.claimPending(1, Duration.ofMinutes(2))
+
+        val claimed = first.single()
+        val lease = claimed.state.delivery.lease
+
+        assertThat(first).hasSize(1)
+        assertThat(claimed.state.status)
+            .isEqualTo(OutboxStatus.IN_PROGRESS)
+        assertThat(lease.lockedUntil).isNotNull()
+        assertThat(second).isEmpty()
+    }
+
+    private fun event(): OutboxEvent =
+        OutboxEvent(
+            message =
+                OutboxMessage(
+                    destination =
+                        OutboxDestination(
+                            topic = "topic",
+                            key = "key",
+                        ),
+                    payload = "{}",
+                    eventType = "TestEvent",
                 ),
-            )
-
-        val found = repository.findById(saved.id!!)
-
-        assertThat(found).isNotNull
-        assertThat(found!!.title).isEqualTo("checkout latency")
-        assertThat(found.investigationType)
-            .isEqualTo(InvestigationType.ALERT_INVESTIGATION)
-    }
-
-    @Test
-    fun `returns null for a missing conversation`() {
-        assertThat(repository.findById("missing")).isNull()
-    }
-
-    @Test
-    fun `assigns an optimistic-lock version on first save`() {
-        val saved =
-            repository.save(
-                Conversation(
-                    title = "rollout health",
-                    investigationType =
-                        InvestigationType.ROLLOUT_HEALTH_CHECK,
-                ),
-            )
-
-        assertThat(saved.id).isNotNull()
-        assertThat(saved.version).isEqualTo(0L)
-    }
+        )
 }
