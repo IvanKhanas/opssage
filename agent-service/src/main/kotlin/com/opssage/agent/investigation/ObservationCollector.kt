@@ -15,11 +15,8 @@
  */
 package com.opssage.agent.investigation
 
-import com.opssage.agent.llm.ConversationTurn
 import com.opssage.agent.llm.TargetPlanner
-import com.opssage.agent.model.AnchorWindow
 import com.opssage.agent.model.InvestigationTarget
-import com.opssage.agent.model.InvestigationType
 import com.opssage.agent.model.Observation
 import com.opssage.agent.playbook.AnalyticsPlaybookRunner
 import com.opssage.agent.playbook.AnalyticsPrompt
@@ -69,14 +66,3 @@ class ObservationCollector(
             ),
         )
 }
-
-data class ObservationRequest(
-    val type: InvestigationType,
-    val prompt: ObservationPrompt,
-    val window: AnchorWindow,
-)
-
-data class ObservationPrompt(
-    val history: List<ConversationTurn>,
-    val input: String,
-)

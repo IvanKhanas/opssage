@@ -25,14 +25,6 @@ import com.opssage.agent.tools.ToolOutputReader
 
 import org.springframework.stereotype.Component
 
-data class ConfidenceInputs(
-    val type: InvestigationType,
-    val reported: Confidence,
-    val evidenceCount: Int,
-    val observations: List<Observation>,
-    val grounded: Boolean = true,
-)
-
 @Component
 class ConfidenceCalculator(
     private val properties: ConfidenceProperties,
