@@ -15,13 +15,14 @@ OpsSage does that first pass. It queries VictoriaMetrics, VictoriaLogs, distribu
 ```
 UI
  └── Admin Service
-      └── AI Agent Service ──── Kafka ──── Skills Service (SRE MCP Server)
-           │                                   ├── VictoriaMetrics
-           │                                   ├── VictoriaLogs
-           │                                   ├── Kubernetes API
-           │                                   └── Distributed tracing
-           └── MCP ──── Knowledge Service
-                            └── MongoDB (service profiles, runbooks, known incidents)
+      └── Kafka ──── AI Agent Service
+                       ├── MCP ──── SRE MCP Server
+                       │             ├── VictoriaMetrics
+                       │             ├── VictoriaLogs
+                       │             ├── Kubernetes API
+                       │             └── Distributed tracing
+                       └── MCP ──── Knowledge Service
+                                    └── MongoDB Atlas Local
 ```
 
 | Service | Role |
@@ -32,7 +33,42 @@ UI
 | Admin Service | REST API backend for the UI — starts investigations, returns reports, moderates knowledge |
 | Web UI | Interface for SRE engineers and analysts |
 
-The agent publishes investigation tasks to Kafka. The Skills Service picks them up, runs the diagnostic steps, and publishes results back.
+Admin Service publishes user and system investigation commands to Kafka. AI Agent Service consumes those commands and runs the investigation. The agent talks to SRE and Knowledge only through bounded read-only MCP tools. Kafka is not used between the agent and SRE tools because that boundary must stay interactive, tool-scoped, and masked before model consumption.
+
+Default command topic:
+
+```text
+opssage.investigation.requests
+```
+
+Investigation commands and results are published through a transactional
+outbox. The service first commits its MongoDB state and an outbox event in the
+same transaction, then a scheduled publisher delivers the event to Kafka.
+Kafka consumer failures are retried and then routed to dedicated DLQ topics:
+
+```text
+opssage.investigation.requests.dlq
+opssage.investigation.results.dlq
+```
+
+The direct `agent-service` REST endpoint is kept for local development and internal smoke tests. The production entrypoint for UI traffic is `admin-service`.
+
+## Authentication boundary
+
+Admin Service is the public gateway. Browser sessions use short-lived JWT
+access tokens stored in `Secure`, `HttpOnly`, `SameSite=Strict` cookies. Refresh
+tokens are opaque random values, also stored in secure cookies, and only their
+hashes are persisted in MongoDB.
+
+User identity is server-owned. Request bodies never decide `userId`, roles, or
+permissions. When Admin Service publishes an investigation command to Kafka, it
+adds `requestedBy` from the verified security context.
+
+For local HTTP development set:
+
+```bash
+ADMIN_AUTH_COOKIE_SECURE=false
+```
 
 ## Investigation types
 
@@ -72,7 +108,7 @@ The read-only constraint is architectural, not just a policy:
 
 ## Tech stack
 
-Kotlin, Spring Boot 4, Spring AI for LLM integration and MCP client/server. MongoDB stores chat history, investigation records, and the knowledge base. Kafka handles async communication between the agent and the Skills Service. VictoriaMetrics and VictoriaLogs are the observability backend; the Kubernetes API is used for cluster event and workload inspection. Gradle multi-module build with ktlint, Spotless, JaCoCo, and SonarQube.
+Kotlin, Spring Boot 4, Spring AI for LLM integration and MCP client/server. MongoDB stores chat history, investigation records, and the knowledge base. Kafka handles async communication between Admin Service and AI Agent Service. VictoriaMetrics and VictoriaLogs are the observability backend; the Kubernetes API is used for cluster event and workload inspection. Gradle multi-module build with ktlint, Spotless, Kover, and SonarQube.
 
 ## Modules
 
