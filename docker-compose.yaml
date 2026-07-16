@@ -1,36 +1,134 @@
+include:
+  - infra/docker-compose.yml
+
 services:
-  mongo:
-    image: mongodb/mongodb-atlas-local:8.0
-    container_name: opssage-mongo
+  admin-service:
+    build:
+      context: .
+      dockerfile: admin-service/Dockerfile
+    environment:
+      ADMIN_MONGODB_URI: >-
+        ${ADMIN_MONGODB_URI:-mongodb://mongo:27017/opssage-admin?directConnection=true}
+      ADMIN_AUTH_JWT_SECRET: ${ADMIN_AUTH_JWT_SECRET:?ADMIN_AUTH_JWT_SECRET is required}
+      ADMIN_AUTH_COOKIE_SECURE: ${ADMIN_AUTH_COOKIE_SECURE:-false}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8080
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-      - mongo-config:/data/configdb
+      - "${ADMIN_SERVICE_PORT:-8080}:8080"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://localhost:8080/actuator/health
+          | grep -q '"status":"UP"'
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    networks:
+      - opssage_internal
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: agent-service/Dockerfile
+    environment:
+      AGENT_MONGODB_URI: >-
+        ${AGENT_MONGODB_URI:-mongodb://mongo:27017/opssage-agent?directConnection=true}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      SRE_MCP_URL: http://sre-mcp-server:8083
+      KNOWLEDGE_MCP_URL: http://knowledge-mcp-server:8082
+      AGENT_SRE_NAMESPACE: ${AGENT_SRE_NAMESPACE:-default}
+      SERVER_PORT: 8081
+    expose:
+      - "8081"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://localhost:8081/actuator/health
+          | grep -q '"status":"UP"'
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    networks:
+      - opssage_internal
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      sre-mcp-server:
+        condition: service_healthy
+      knowledge-mcp-server:
+        condition: service_healthy
 
   knowledge-mcp-server:
     build:
       context: .
       dockerfile: knowledge-mcp-server/Dockerfile
-    container_name: opssage-knowledge-mcp-server
+    environment:
+      MONGODB_URI: >-
+        ${KNOWLEDGE_MONGODB_URI:-mongodb://mongo:27017/opssage-knowledge?directConnection=true}
+      SERVER_PORT: 8082
+    expose:
+      - "8082"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://localhost:8082/actuator/health
+          | grep -q '"status":"UP"'
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 90s
+    networks:
+      - opssage_internal
     depends_on:
       mongo:
         condition: service_healthy
-    environment:
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/opssage-knowledge?directConnection=true}
-      SERVER_PORT: ${SERVER_PORT:-8082}
-      KNOWLEDGE_PAGE_SIZE: ${KNOWLEDGE_PAGE_SIZE:-20}
-      KNOWLEDGE_MAX_PAGE_SIZE: ${KNOWLEDGE_MAX_PAGE_SIZE:-100}
-      FACT_VECTOR_INDEX: ${FACT_VECTOR_INDEX:-fact-vector-index}
-      FACT_VECTOR_DIMENSIONS: ${FACT_VECTOR_DIMENSIONS:-384}
-      FACT_VECTOR_CANDIDATES_MULTIPLIER: >-
-        ${FACT_VECTOR_CANDIDATES_MULTIPLIER:-20}
-      FACT_EMBED_CONCURRENCY: ${FACT_EMBED_CONCURRENCY:-4}
-      FACT_BACKFILL_TIMEOUT: ${FACT_BACKFILL_TIMEOUT:-5m}
-      MCP_CALL_TIMEOUT: ${MCP_CALL_TIMEOUT:-30s}
-    ports:
-      - "${SERVER_PORT:-8082}:8082"
 
-volumes:
-  mongo-data:
-  mongo-config:
+  sre-mcp-server:
+    build:
+      context: .
+      dockerfile: sre-mcp-server/Dockerfile
+    environment:
+      VICTORIA_METRICS_URL: http://victoria-metrics:8428
+      VICTORIA_LOGS_URL: http://victoria-logs:9428
+      VICTORIA_TRACES_URL: http://victoria-traces:10428
+      SERVER_PORT: 8083
+    expose:
+      - "8083"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://localhost:8083/actuator/health
+          | grep -q '"status":"UP"'
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    networks:
+      - opssage_internal
+    depends_on:
+      victoria-metrics:
+        condition: service_started
+      victoria-logs:
+        condition: service_started
+      victoria-traces:
+        condition: service_started
+
+networks:
+  opssage_internal:
+    driver: bridge
