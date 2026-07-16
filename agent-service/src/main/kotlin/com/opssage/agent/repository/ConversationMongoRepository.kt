@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.repository.mongo
+package com.opssage.agent.repository
 
 import com.opssage.agent.model.Conversation
 
 import org.springframework.data.mongodb.repository.MongoRepository
 
-interface ConversationDataRepository : MongoRepository<Conversation, String>
+interface ConversationMongoRepository : MongoRepository<Conversation, String>

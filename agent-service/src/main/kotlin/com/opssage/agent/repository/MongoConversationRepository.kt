@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.repository.mongo
+package com.opssage.agent.repository
 
 import com.opssage.agent.model.Conversation
-import com.opssage.agent.repository.ConversationRepository
 
 import org.springframework.stereotype.Component
 
 @Component
 class MongoConversationRepository(
-    private val data: ConversationDataRepository,
+    private val data: ConversationMongoRepository,
 ) : ConversationRepository {
 
     override fun findById(id: String): Conversation? =
