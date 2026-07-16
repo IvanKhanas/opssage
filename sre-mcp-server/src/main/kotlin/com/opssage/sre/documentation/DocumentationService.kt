@@ -43,9 +43,9 @@ class DocumentationService(
             .fetch(link)
             .map { content ->
                 if (content.isBlank()) {
-                    PageOutcome.Failed(link)
+                    FailedPageOutcome(link)
                 } else {
-                    PageOutcome.Loaded(
+                    LoadedPageOutcome(
                         DocumentationPage(
                             DocumentationTitle.of(content, link),
                             link,
@@ -53,16 +53,16 @@ class DocumentationService(
                         ),
                     )
                 }
-            }.onErrorReturn(PageOutcome.Failed(link))
+            }.onErrorReturn(FailedPageOutcome(link))
 
     private fun toResult(
         requested: Int,
         outcomes: List<PageOutcome>,
     ): DocumentationResult {
         val pages =
-            outcomes.filterIsInstance<PageOutcome.Loaded>().map { it.page }
+            outcomes.filterIsInstance<LoadedPageOutcome>().map { it.page }
         val failed =
-            outcomes.filterIsInstance<PageOutcome.Failed>().map { it.link }
+            outcomes.filterIsInstance<FailedPageOutcome>().map { it.link }
         return DocumentationResult(
             pages = pages,
             failedLinks = failed,
@@ -70,15 +70,5 @@ class DocumentationService(
                 "Loaded ${pages.size} of $requested documentation links.",
             confidence = ConfidenceCalculator.of(pages.size, requested),
         )
-    }
-
-    private sealed interface PageOutcome {
-        data class Loaded(
-            val page: DocumentationPage,
-        ) : PageOutcome
-
-        data class Failed(
-            val link: String,
-        ) : PageOutcome
     }
 }

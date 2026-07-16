@@ -27,11 +27,6 @@ import reactor.core.publisher.Mono
 
 import org.springframework.stereotype.Component
 
-private data class DependencyReading(
-    val metric: DependencyMetric,
-    val readings: List<Reading>,
-)
-
 @Component
 class DependencyImpactQuery(
     private val readings: MetricReadings,
