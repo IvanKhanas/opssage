@@ -22,16 +22,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 
 import java.time.Clock
-import java.time.Instant
 
 import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger {}
-
-private data class CachedCatalog(
-    val services: List<String>,
-    val expiresAt: Instant,
-)
 
 @Component
 class ServiceCatalog(

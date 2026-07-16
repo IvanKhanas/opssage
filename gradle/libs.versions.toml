@@ -34,8 +34,11 @@ spring-boot-starter-webflux = { group = "org.springframework.boot", name = "spri
 spring-boot-starter-data-mongodb = { group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb" }
 spring-boot-starter-data-mongodb-reactive = { group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb-reactive" }
 spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
+spring-boot-starter-security = { group = "org.springframework.boot", name = "spring-boot-starter-security" }
+spring-security-oauth2-jose = { group = "org.springframework.security", name = "spring-security-oauth2-jose" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
+spring-kafka = { group = "org.springframework.kafka", name = "spring-kafka" }
 
 # ── Spring AI ────────────────────────────────────────────────────────────────
 spring-ai-openai-starter = { group = "org.springframework.ai", name = "spring-ai-starter-model-openai", version.ref = "spring-ai" }

@@ -15,10 +15,24 @@
  */
 package com.opssage.admin
 
+import com.opssage.admin.config.AdminKafkaProperties
+import com.opssage.admin.config.AuthProperties
+import com.opssage.admin.config.OutboxProperties
+
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import org.springframework.kafka.annotation.EnableKafka
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
+@EnableConfigurationProperties(
+    AdminKafkaProperties::class,
+    AuthProperties::class,
+    OutboxProperties::class,
+)
+@EnableKafka
+@EnableScheduling
 class AdminServiceApp
 
 fun main(args: Array<String>) {

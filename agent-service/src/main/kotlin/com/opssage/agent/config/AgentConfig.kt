@@ -35,6 +35,8 @@ import org.springframework.context.annotation.Configuration
     LlmProperties::class,
     SreProperties::class,
     ToolPolicyProperties::class,
+    AgentKafkaProperties::class,
+    OutboxProperties::class,
 )
 class AgentConfig {
 

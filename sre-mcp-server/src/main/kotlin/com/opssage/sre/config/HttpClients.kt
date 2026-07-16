@@ -29,11 +29,6 @@ import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.WebClient
 
-private data class WebClientSettings(
-    val baseUrl: String,
-    val caCertPath: String? = null,
-)
-
 @Configuration
 class HttpClients {
 

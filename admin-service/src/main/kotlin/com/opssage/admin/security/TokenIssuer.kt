@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.repository.mongo
-
-import com.opssage.agent.model.Conversation
-import com.opssage.agent.repository.ConversationRepository
+package com.opssage.admin.security
 
 import org.springframework.stereotype.Component
 
 @Component
-class MongoConversationRepository(
-    private val data: ConversationDataRepository,
-) : ConversationRepository {
+class TokenIssuer(
+    private val jwtService: JwtService,
+    private val refreshTokenService: RefreshTokenService,
+) {
 
-    override fun findById(id: String): Conversation? =
-        data.findById(id).orElse(null)
-
-    override fun findAll(): List<Conversation> = data.findAll()
-
-    override fun save(conversation: Conversation): Conversation =
-        data.save(conversation)
-
-    override fun deleteById(id: String) = data.deleteById(id)
+    fun issue(principal: UserPrincipal): AuthTokens =
+        AuthTokens(
+            accessToken = jwtService.issue(principal),
+            refreshToken = refreshTokenService.issue(principal.userId),
+            principal = principal,
+        )
 }

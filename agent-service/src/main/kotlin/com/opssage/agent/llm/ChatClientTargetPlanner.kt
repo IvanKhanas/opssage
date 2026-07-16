@@ -30,10 +30,6 @@ import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger {}
 
-internal data class PlannedService(
-    val service: String = "",
-)
-
 @Component
 class ChatClientTargetPlanner(
     @Qualifier("toolFreeChatClient")

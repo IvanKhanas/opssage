@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opssage.agent.repository.mongo
+package com.opssage.admin.repository
 
-import com.opssage.agent.model.Conversation
+import com.opssage.admin.model.AdminUser
 
 import org.springframework.data.mongodb.repository.MongoRepository
 
-interface ConversationDataRepository : MongoRepository<Conversation, String>
+interface AdminUserMongoRepository : MongoRepository<AdminUser, String> {
+
+    fun findByCredentialsEmail(email: String): AdminUser?
+
+    fun existsByCredentialsEmail(email: String): Boolean
+}

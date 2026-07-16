@@ -16,7 +16,6 @@
 package com.opssage.agent.investigation
 
 import com.opssage.agent.llm.LlmVerdict
-import com.opssage.agent.model.AnchorWindow
 import com.opssage.agent.model.Observation
 import com.opssage.agent.text.Tokens
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -27,22 +26,6 @@ import java.time.temporal.ChronoUnit
 import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger {}
-
-data class GroundingContext(
-    val observations: List<Observation>,
-    val window: AnchorWindow,
-)
-
-data class GroundedVerdict(
-    val summary: String,
-    val evidence: List<String>,
-    val grounded: Boolean,
-)
-
-private data class Corpus(
-    val text: String,
-    val instants: Set<Instant>,
-)
 
 @Component
 class EvidenceGuard {

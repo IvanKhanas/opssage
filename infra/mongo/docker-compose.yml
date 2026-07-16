@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongodb/mongodb-atlas-local:8.0
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - opssage_internal
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+volumes:
+  mongo_data:
+  mongo_config:

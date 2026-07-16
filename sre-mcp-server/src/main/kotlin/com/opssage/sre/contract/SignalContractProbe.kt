@@ -27,14 +27,6 @@ import reactor.core.publisher.Mono
 
 import org.springframework.stereotype.Component
 
-private data class SignalProbes(
-    val anyLogs: Int,
-    val errorLogs: Int,
-    val traceServices: Int,
-    val pods: Int,
-    val podLabel: String,
-)
-
 @Component
 class SignalContractProbe(
     private val clients: SignalContractClients,
@@ -58,11 +50,17 @@ class SignalContractProbe(
             ).map { probes ->
                 report(
                     SignalProbes(
-                        probes.t1,
-                        probes.t2,
-                        probes.t3,
-                        probes.t4,
-                        probes.t5,
+                        logs =
+                            LogSignalProbes(
+                                anyLogs = probes.t1,
+                                errorLogs = probes.t2,
+                            ),
+                        traces = TraceSignalProbes(probes.t3),
+                        kubernetes =
+                            KubernetesSignalProbes(
+                                pods = probes.t4,
+                                podLabel = probes.t5,
+                            ),
                     ),
                 )
             }
@@ -73,13 +71,13 @@ class SignalContractProbe(
         listOf(
             logStream(probes),
             errorLevels(probes),
-            traceBackend(probes.traceServices),
+            traceBackend(probes.traces.traceServices),
             kubernetesApi(probes),
         )
 
     private fun logStream(probes: SignalProbes): ContractCheck {
         val expected = "field ${logs.namespaceField} selects log lines"
-        if (probes.anyLogs == FAILED) {
+        if (probes.logs.anyLogs == FAILED) {
             return ContractCheck(
                 name = "logStream",
                 status = ContractStatus.MISCONFIGURED,
@@ -88,7 +86,7 @@ class SignalContractProbe(
                 impact = "findTopLogErrors and findLogErrorsByText fail",
             )
         }
-        if (probes.anyLogs == 0) {
+        if (probes.logs.anyLogs == 0) {
             return ContractCheck(
                 name = "logStream",
                 status = ContractStatus.UNKNOWN,
@@ -104,7 +102,7 @@ class SignalContractProbe(
 
     private fun errorLevels(probes: SignalProbes): ContractCheck {
         val configured = logs.errorLevels.joinToString()
-        if (probes.errorLogs == FAILED || probes.anyLogs <= 0) {
+        if (probes.logs.errorLogs == FAILED || probes.logs.anyLogs <= 0) {
             return ContractCheck(
                 name = "errorLevels",
                 status = ContractStatus.UNKNOWN,
@@ -113,7 +111,7 @@ class SignalContractProbe(
                 impact = "error aggregation is unverified",
             )
         }
-        if (probes.errorLogs == 0) {
+        if (probes.logs.errorLogs == 0) {
             return ContractCheck(
                 name = "errorLevels",
                 status = ContractStatus.UNKNOWN,
@@ -155,7 +153,7 @@ class SignalContractProbe(
     }
 
     private fun kubernetesApi(probes: SignalProbes): ContractCheck {
-        val pods = probes.pods
+        val pods = probes.kubernetes.pods
         val labels = kubernetes.podSelectors().joinToString()
         if (pods == FAILED) {
             return ContractCheck(
@@ -179,7 +177,7 @@ class SignalContractProbe(
                 impact = "kubernetes evidence will be empty",
             )
         }
-        if (probes.podLabel.isBlank()) {
+        if (probes.kubernetes.podLabel.isBlank()) {
             return ContractCheck(
                 name = "kubernetesApi",
                 status = ContractStatus.MISCONFIGURED,
@@ -192,7 +190,10 @@ class SignalContractProbe(
                         "service; rollout checks lose pod state and events",
             )
         }
-        return ok("kubernetesApi", "pods matched by ${probes.podLabel}")
+        return ok(
+            "kubernetesApi",
+            "pods matched by ${probes.kubernetes.podLabel}",
+        )
     }
 
     private fun ok(

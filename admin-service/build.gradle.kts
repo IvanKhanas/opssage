@@ -15,7 +15,11 @@ kover {
     reports {
         filters {
             excludes {
-                classes("*AdminServiceApp*")
+                classes(
+                    "*AdminServiceApp*",
+                    "com.opssage.admin.repository.Mongo*Repository",
+                    "com.opssage.admin.outbox.MongoOutboxEventRepository",
+                )
             }
         }
     }
@@ -27,6 +31,10 @@ dependencies {
     implementation(libs.bundles.observability)
     implementation(libs.spring.boot.starter.data.mongodb)
     implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.security.oauth2.jose)
+    implementation(libs.spring.kafka)
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(platform(libs.spring.boot.bom))

@@ -1,0 +1,44 @@
+/*
+ * Copyright 2026 Ivan Khanas
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.opssage.admin.messaging
+
+import com.opssage.admin.service.InvestigationRequestStore
+import tools.jackson.databind.ObjectMapper
+
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
+
+@Component
+class InvestigationResultConsumer(
+    private val store: InvestigationRequestStore,
+    private val objectMapper: ObjectMapper,
+) {
+
+    @KafkaListener(topics = [INVESTIGATION_RESULTS_TOPIC])
+    @Transactional
+    fun consume(message: String) {
+        val event =
+            objectMapper.readValue(
+                message,
+                InvestigationResultEvent::class.java,
+            )
+        store.complete(event)
+    }
+}
+
+private const val INVESTIGATION_RESULTS_TOPIC =
+    "\${admin.kafka.topics.investigations.investigation-results-topic}"

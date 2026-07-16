@@ -11,6 +11,9 @@ RUN chmod +x gradlew \
 
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system opssage \
  && useradd --system --gid opssage --home /app opssage
 COPY --from=build /workspace/app.jar app.jar

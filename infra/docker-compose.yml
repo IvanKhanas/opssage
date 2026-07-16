@@ -1,0 +1,8 @@
+include:
+  - mongo/docker-compose.yml
+  - kafka/docker-compose.yml
+  - victoria/docker-compose.yml
+
+networks:
+  opssage_internal:
+    driver: bridge

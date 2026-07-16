@@ -29,14 +29,6 @@ import kotlin.math.roundToLong
 
 import org.springframework.stereotype.Component
 
-private data class WindowReadings(
-    val errorRate: Reading,
-    val p95: Reading,
-    val p99: Reading,
-) {
-    fun readings(): List<Reading> = listOf(errorRate, p95, p99)
-}
-
 @Component
 class RolloutComparisonQuery(
     private val readings: MetricReadings,

@@ -23,14 +23,6 @@ import java.util.Locale
 
 import org.springframework.stereotype.Component
 
-data class ServiceScore(
-    val service: String,
-    val errorRate: Double? = null,
-    val latencyP99: Double? = null,
-    val errorLogs: Long = 0,
-    val correctnessFailure: Double? = null,
-)
-
 @Component
 class FleetRanking(
     private val reader: ToolOutputReader,

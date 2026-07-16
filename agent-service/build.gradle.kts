@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.spring.ai.mcp.client)
     implementation(libs.bundles.djl.onnx.ner)
     implementation(libs.jackson.module.kotlin)
+    implementation(libs.spring.kafka)
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(platform(libs.spring.boot.bom))

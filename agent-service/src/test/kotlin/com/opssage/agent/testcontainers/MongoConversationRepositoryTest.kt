@@ -32,6 +32,7 @@ import org.springframework.test.context.DynamicPropertySource
     properties = [
         "spring.ai.mcp.client.enabled=false",
         "spring.ai.openai.api-key=test-key",
+        "spring.kafka.listener.auto-startup=false",
     ],
 )
 class MongoConversationRepositoryTest {
